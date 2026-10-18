@@ -1,0 +1,23 @@
+# Secrets et configuration locale
+.env
+*.env
+.groq_config
+.telegram_config
+
+# Données générées (sessions des utilisateurs, rapports, photos)
+sessions/
+rapports/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+*.log
+
+# Divers
+*.tmp
+.problem_solving_history
+
+# Divers
+*.tmp
+.problem_solving_history
