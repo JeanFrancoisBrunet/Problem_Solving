@@ -16,8 +16,4 @@ venv/
 
 # Divers
 *.tmp
-.problem_solving_history
-
-# Divers
-*.tmp
-.problem_solving_history
+.problemSolving_history

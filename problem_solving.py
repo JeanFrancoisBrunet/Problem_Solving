@@ -2169,7 +2169,7 @@ def invite_saisie():
     """Invite « » » (codes \001/\002 : readline calcule ainsi la largeur visible)."""
     return "\001\033[1;32m\002» \001\033[0m\002" if COULEUR_ACTIVE else "» "
 
-FICHIER_HISTORIQUE = Path(os.getenv("PS_HISTORY", str(Path.home() / ".problem_solving_history")))
+FICHIER_HISTORIQUE = Path(os.getenv("PS_HISTORY", str(BASE_DIR / ".problemSolving_history")))
 
 def charger_historique_saisie():
     """Rappelle les saisies des sessions précédentes (flèches haut/bas) et les enregistre à la sortie."""

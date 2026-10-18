@@ -118,7 +118,7 @@ Commandes (`/8d`, `/ok`…) en **cyan**, têtes de chapitre et titres du menu en
 
 Au lancement, un **menu court** (l'essentiel, 8 lignes) est affiché ; `/aide` (ou `/help`) ouvre le **menu complet**, en tableau compact réajusté à la largeur de la fenêtre. Tout texte plus haut que la fenêtre (menu, historique, rapport) est présenté **page par page** : Entrée pour la suite, `q` pour arrêter.
 
-**Historique de saisie** : les flèches ↑ / ↓ rappellent vos saisies des sessions précédentes (fichier `~/.problem_solving_history`, droits 600, 1000 lignes ; autre emplacement avec la variable `PS_HISTORY`).
+**Historique de saisie** : les flèches ↑ / ↓ rappellent vos saisies des sessions précédentes (fichier `.problemSolving_history` dans le dossier du projet, droits 600, 1000 lignes ; autre emplacement avec la variable `PS_HISTORY`).
 
 On quitte avec `/q`, `/quit` (ou Ctrl+C) ; le projet en cours est enregistré.
 
