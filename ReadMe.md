@@ -57,7 +57,7 @@ Chaque méthode porte une consigne pour le coach. Exemple pour le **K6pts** (d'a
 ### Mode guidé (par défaut) : une question à la fois
 
 1. L'utilisateur lance une méthode : `/8d Retours clients lot 42`
-2. Le coach présente l'étape (question centrale, attendu, outils), puis pose **les questions de l'étape une par une**. Exemple en 8D / D1 : identification, écart attendu / réel, puis **QQOQCCP déroulé** (Quoi, Qui, Où, Quand, Comment, Combien, Pourquoi), Est / N'est pas, risque, enjeu — 12 questions. Les étapes comptent de 3 à 6 questions (43 en 8D, 29 en A3, 17 en PDCA, 21 en K6pts).
+2. Le coach présente l'étape (question centrale, attendu, outils), puis pose **les questions de l'étape une par une**. Exemple en 8D / D1 : identification, écart attendu / réel, puis **QQOQCCP déroulé** (Quoi, Qui, Où, Quand, Comment, Combien, Pourquoi), Est / N'est pas, risque, enjeu — 12 questions. Les étapes comptent de 3 à 6 questions (39 en 8D, 29 en A3, 17 en PDCA, 21 en K6pts) ; l'étape **D5 du 8D** suit un déroulé spécifique (voir ci-dessous).
 3. Après chaque réponse floue, le coach pose **au plus une relance** ; la réponse à la relance s'ajoute à la précédente et on passe à la question suivante : **le dialogue ne boucle pas**.
 4. Après la dernière question : revue brève de l'étape par rapport à l'attendu (verdict *suffisant* / *à compléter*). L'utilisateur peut ajouter un complément libre, puis tape `/ok`.
 5. À la dernière étape : **revue de cohérence** par le LLM et **rapport Markdown**.
@@ -65,6 +65,16 @@ Chaque méthode porte une consigne pour le coach. Exemple pour le **K6pts** (d'a
 Les questions sont volontairement **générales**, sans exemple propre à un métier : le programme reste compréhensible par des personnes de tous secteurs, et le coach IA a pour consigne de ne pas donner d'exemples concrets.
 
 Pendant les questions : `-` (ou `/sauter`) laisse une question sans réponse, `/prec` revient en arrière, une phrase avec « ? » interroge le coach sans perdre la question en cours, `oui` / `non` restent de simples réponses.
+
+### D5 du 8D : Ishikawa 6M → FTA → 5 Pourquoi
+
+En modes `guide` et `rapide`, l'étape **D5** se déroule en trois temps, sans appel IA pendant la saisie :
+
+1. **Ishikawa 6M, une cause à la fois** : Machine, Matière, Main-d'œuvre, Méthodes, Milieu, Mesure. Pour chaque facteur, vous écrivez une cause, puis une autre, et `-` (ou `/sauter`, `ok`, `fin`) passe au facteur suivant. Les causes sont numérotées **O1.1, O1.2… O6.n** pour l'**occurrence**, puis le même travail est fait pour la **non-détection** (**N1.1… N6.n**). Le diagramme de chaque Ishikawa est affiché à la fin.
+2. **FTA, cause par cause** : un standard existe-t-il ? est-il appliqué ? est-il robuste ? (réponse `oui` / `non`, commentaire possible, ou boutons). **Au premier « non », la cause est retenue comme prouvée** ; trois « oui » l'écartent. `/sauter` laisse une cause non évaluée.
+3. **5 Pourquoi sur chaque cause prouvée** : au moins 5 pourquoi, plus si nécessaire ; `-` ou `/fin` quand la dernière réponse est la cause racine (une alerte prévient si vous arrêtez avant 5).
+
+`/prec` annule la dernière saisie, à n'importe quel moment. La synthèse (causes racines, chaînes de pourquoi, causes prouvées, écartées, non évaluées, puis les deux Ishikawa) est la réponse de l'étape D5 : elle figure dans le rapport et sert de contexte aux étapes suivantes. En mode `libre`, D5 reste une réponse libre.
 
 ### Trois modes (`/mode`)
 
@@ -95,6 +105,7 @@ Le mode est mémorisé ; passer de `libre` à `guide` conserve le texte déjà s
 | `/reponse` · `/effacer`                                | Relit les réponses de l'étape · recommence l'étape                                            |
 | `/passer` · `/retour`                                  | Saute l'étape · revient à la précédente (ou rouvre la dernière étape d'une démarche terminée) |
 | `/guide`                                               | Rappelle l'étape (attendu, outils) et la question en cours                                    |
+| `/oui` · `/non` · `/fin`                               | D5 : réponse FTA · fin d'un facteur (Ishikawa) ou des pourquoi                                |
 | `/etat`                                                | Résumé des étapes (✅ faite, 👉 en cours, 📷 photos, 💬 échanges)                             |
 | `/titre [texte]` · `/sauver [titre]`                   | Titre · enregistrement explicite                                                              |
 | `/projets` · `/charger <n>` · `/supprimer <n>`         | Liste, réouverture, suppression                                                               |
@@ -114,7 +125,7 @@ Sous Telegram, chaque message porte les **boutons** utiles (valider, sauter, ét
 
 ### Terminal : couleurs et fenêtre
 
-Commandes (`/8d`, `/ok`…) en **cyan**, têtes de chapitre et titres du menu en **jaune**, avertissements en rouge ; le texte est réajusté à la largeur réelle de la fenêtre et la durée de chaque réponse IA est affichée. Options : `--no-color` (ou variable `NO_COLOR`), `--no-resize`, `--cols 130 --rows 48`. Le programme demande au terminal de s'agrandir ; si votre terminal ignore cette demande, lancez-le avec une géométrie, par exemple `lxterminal --geometry=130x48 -e python3 problem_solving.py`.
+Commandes (`/8d`, `/ok`…) en **cyan**, têtes de chapitre et titres du menu en **jaune**, avertissements en rouge ; le texte est réajusté à la largeur réelle de la fenêtre et la durée de chaque réponse IA est affichée. Options : `--no-color` (ou variable `NO_COLOR`), `--no-resize`, `--cols 110 --rows 38`. Le programme demande au terminal de prendre cette taille (110 colonnes × 38 lignes par défaut : la fenêtre n'occupe pas tout l'écran) ; si votre terminal ignore cette demande, lancez-le avec une géométrie, par exemple `lxterminal --geometry=110x38 -e python3 problem_solving.py`.
 
 Au lancement, un **menu court** (l'essentiel, 8 lignes) est affiché ; `/aide` (ou `/help`) ouvre le **menu complet**, en tableau compact réajusté à la largeur de la fenêtre. Tout texte plus haut que la fenêtre (menu, historique, rapport) est présenté **page par page** : Entrée pour la suite, `q` pour arrêter.
 

@@ -489,16 +489,9 @@ QUESTIONS = {
           "d'accord (son autorisation est-elle nécessaire) ?"),
     ],
     ("8d", "D5"): [
-        Q("6M — Machine, Matière, Main-d'œuvre", "6M (Ishikawa) — Quels facteurs Machine, Matière et "
-          "Main-d'oeuvre ont pu générer le problème ?"),
-        Q("6M — Méthodes, Milieu, Mesure", "6M (Ishikawa) — Quels facteurs Méthodes, Milieu et Mesure ont pu "
-          "générer le problème ?"),
-        Q("Facteurs prouvés (FTA)", "Quels facteurs avez-vous prouvés ? Pour chacun : existe-t-il un "
-          "standard ? est-il respecté ? est-il robuste ?"),
-        Q("Cause racine d'occurrence", "5 Pourquoi, Occurence — Pourquoi le défaut est-il apparu ? Jusqu'à "
-          "quelle cause racine descendez-vous (sur chaque facteur prouvé) ?"),
-        Q("Cause racine de non-détection", "5 Pourquoi, Non-Détection — Pourquoi n'a-t-il pas été détecté ni "
-          "arrêté ? Quelle est la cause racine ?"),
+        Q("Analyse des causes (6M, FTA, 5 Pourquoi)",
+          "Analyse en trois temps : Ishikawa 6M (occurrence, puis non-détection), FTA de chaque cause, "
+          "5 Pourquoi sur les causes prouvées."),
     ],
     ("8d", "D6"): [
         Q("Nature des causes", "Quelle est la nature de chaque cause racine : technique, systémique ou "
@@ -678,35 +671,36 @@ SYSTEM_PROMPT = (
 # ----------------------------------------------------------------------------
 AIDE_SECTIONS = [
     ("DÉMARCHES", [
-        ("/8d [titre]", "8D : résolution formelle, en équipe, 8 étapes + rapport", ""),
-        ("/a3 [titre]", "A3 : du contexte aux enseignements, sur une feuille", ""),
+        ("/8d [titre]", "8D : résolution en équipe, sur 8 étapes & Synthèse", ""),
+        ("/a3 [titre]", "A3 : du contexte jusqu'aux enseignements, sur une feuille A3", ""),
         ("/pdca [titre]", "PDCA : cycle court Planifier · Réaliser · Vérifier · Ajuster", ""),
-        ("/k6pts [titre]", "Kaizen 6 points : observer, tester, retenir ce qui marche", ""),
+        ("/k6pts [titre]", "Kaizen 6 points : Observer, Tester, Retenir ce qui marche", ""),
     ]),
     ("PENDANT UNE DÉMARCHE", [
-        ("(votre réponse)", "Répondez à la question ; le coach relance si c'est flou", ""),
+        ("(votre réponse)", "Répondez à la question ; le coach relance si nécessaire", ""),
         ("-  ou  /sauter", "Laisse la question sans réponse", ""),
         ("/prec", "Revient à la question précédente", ""),
         ("phrase avec ?", "Pose une question au coach (la question en cours reste posée)", ""),
         ("photo", "Envoyez une photo (légende = question) : analysée, jointe au rapport", "tg"),
-        ("/photo <chemin> [légende]", "Analyse une image du disque, jointe au rapport", "cli"),
-        ("/ok  ou  ok", "Valide l'étape", ""),
-        ("/passer · /retour", "Passe l'étape · revient à l'étape précédente", ""),
-        ("/reponse · /effacer", "Relit vos réponses de l'étape · recommence l'étape", ""),
-        ("/guide · /etat", "Rappelle l'attendu et la question · résumé des étapes", ""),
+        ("/photo <chemin> [légende]", "Analyse une image, jointe au rapport", "cli"),
+        ("/ok   ou   ok", "Valide l'étape", ""),
+        ("/passer   /retour", "Passe l'étape / Revient à l'étape précédente", ""),
+        ("/reponse  /effacer", "Relit vos réponses de l'étape / Recommence l'étape", ""),
+        ("/guide    /etat", "Rappelle l'attendu et la question / Résumé des étapes", ""),
+        ("/oui  /non  /fin", "D5 : réponse FTA / fin d'un facteur ou des pourquoi", ""),
     ]),
     ("MODE DU COACH", [
-        ("/mode guide", "Questions une par une, relance de l'IA si besoin (défaut)", ""),
+        ("/mode guide", "Questions une par une, relance de l'IA si besoin (par défaut)", ""),
         ("/mode rapide", "Questions une par une, sans IA (plus rapide en local)", ""),
         ("/mode libre", "Vous écrivez librement, le coach commente l'ensemble", ""),
     ]),
     ("PROJETS", [
         ("/projets", "Liste de vos projets", ""),
-        ("/charger <n>", "Rouvre un projet avec tout son historique", ""),
-        ("/sauver · /stop", "Enregistre (déjà automatique) · met de côté", ""),
+        ("/charger <n>", "Ré-ouvre un projet avec tout son historique", ""),
+        ("/sauver   /stop", "Enregistre (automatiquement) / Met de côté", ""),
         ("/titre [texte]", "Définit ou modifie le titre, à tout moment", ""),
         ("/historique [étape|tout]", "Relit les échanges conservés", ""),
-        ("/rapport [complet]", "Génère le rapport (complet = avec tous les échanges)", ""),
+        ("/rapport [complet]", "Génère le rapport (complet avec tous les échanges)", ""),
         ("/supprimer [n]", "Efface un projet (avec confirmation)", ""),
     ]),
     ("MOTEUR IA", [
@@ -715,20 +709,20 @@ AIDE_SECTIONS = [
     ]),
     ("AIDE ET SORTIE", [
         ("/aide  ou  /help", "Affiche ce menu", ""),
-        ("/q  ou  /quit", "Quitte le programme (le projet est enregistré)", "cli"),
+        ("/q     ou  /quit", "Quitte le programme (& enregistre le projet)", "cli"),
     ]),
 ]
 # Menu court affiché au lancement du terminal : l'essentiel sur quelques lignes
 AIDE_COURTE = [
-    ("/8d  /a3  /pdca  /k6pts", "Démarre une démarche (+ titre facultatif)"),
-    ("/projets · /charger <n>", "Liste · rouvre un projet"),
-    ("/ok · /sauter · /prec", "Valide l'étape · saute · revient"),
+    ("/8d   /a3   /pdca   /k6pts", "Démarre une démarche (ajouter un titre)"),
+    ("/projets  /charger <n>", "Liste / Ré-ouvre un projet"),
+    ("/ok       /sauter   /prec", "Valide l'étape / Avance / Retour arrière"),
     ("/modele", "Moteur et modèles"),
     ("/aide  ou  /help", "Menu complet"),
-    ("/q  ou  /quit", "Quitte (projet enregistré)"),
+    ("/q     ou  /quit", "Quitte (& enregistre le projet)"),
 ]
 AIDE_CONFIDENTIALITE = ("Confidentialité : avec Groq, les photos partent dans le cloud ; avec Ollama, elles "
-                        "restent sur le Pi5. Évitez visages et informations confidentielles.")
+                        "restent sur le Pi5. Évitez visages et infos confidentiels.")
 
 def aide_texte():
     """Menu en liste (Telegram, ou terminal étroit) : sections puis « commande — rôle »."""
@@ -801,8 +795,12 @@ BTN_QUESTION = [[("⏭️ Sauter", "/sauter"), ("↩️ Précédente", "/prec")]
                 [("🧾 Mes réponses", "/reponse"), ("📊 État", "/etat")]]
 BTN_FIN_QUESTIONS = [[("✅ Valider l'étape", "/ok"), ("🧾 Mes réponses", "/reponse")],
                      [("↩️ Question précédente", "/prec")]]
+BTN_RCA_ISH = [[("➡️ Facteur suivant", "/sauter"), ("↩️ Annuler la dernière", "/prec")]]
+BTN_RCA_FTA = [[("✅ Oui", "/oui"), ("❌ Non", "/non")],
+               [("⏭️ Cause non évaluée", "/sauter"), ("↩️ Annuler", "/prec")]]
+BTN_RCA_PQ = [[("🏁 Cause racine atteinte", "/fin"), ("↩️ Annuler", "/prec")]]
 BTN_FIN = [[("📄 Rapport complet", "/rapport complet"), ("📂 Projets", "/projets")],
-           [("↩️ Rouvrir la dernière étape", "/retour")]]
+           [("↩️ Ré-ouvrir la dernière étape", "/retour")]]
 
 # ----------------------------------------------------------------------------
 # Fichiers
@@ -1020,13 +1018,137 @@ def libelle_modele(backend, usage, modele):
 # Session : utilisateur + projet actif
 # ----------------------------------------------------------------------------
 CHAMPS_PROJET = ("methode", "titre", "titre_propose", "idx", "reponses", "photos", "fil", "qr",
-                 "brouillon", "fini", "debut", "maj")
+                 "brouillon", "fini", "debut", "maj", "rca")
 MODES = {"guide": "guidé : une question à la fois, avec relance IA si la réponse est floue",
          "rapide": "rapide : une question à la fois, sans appel IA (idéal avec un modèle local lent)",
          "libre": "libre : vous écrivez la réponse de l'étape, le coach commente"}
 RE_REPONSE_NEUTRE = re.compile(r"(non|oui|nsp|je ne sais pas|aucun|aucune|n/?a|rien|ok|d'accord)\.?", re.I)
 LIB_FIL = {"u": "🧑 Vous", "c": "🧭 Coach", "q": "🧑 Vous (question)", "a": "🧭 Coach",
            "p": "📷 Photo", "s": "⚙️"}
+
+# ----------------------------------------------------------------------------
+# D5 : Ishikawa 6M (occurrence puis non-détection) → FTA → 5 Pourquoi
+# L'état se déduit d'un journal d'événements (self.rca["ev"]) : annuler = retirer le dernier.
+#   ["c", texte] cause · ["m"] fin du facteur · ["f", "oui"|"non", note] réponse FTA ·
+#   ["fs"] cause non évaluée · ["p", texte] un pourquoi · ["pe"] cause racine atteinte
+# ----------------------------------------------------------------------------
+SIX_M = [("Machine", "équipements, outils, logiciels, moyens de production"),
+         ("Matière", "matières, composants, produits ou informations reçus"),
+         ("Main-d'œuvre", "compétences, formation, organisation du travail, charge (le processus, "
+                          "jamais la personne)"),
+         ("Méthodes", "procédures, instructions, gammes, standards, séquences de travail"),
+         ("Milieu", "environnement : lieu, ambiance, ergonomie, rangement"),
+         ("Mesure", "contrôles, mesures, moyens et critères de détection")]
+DIMENSIONS = [("O", "OCCURRENCE", "Pourquoi le problème a-t-il pu apparaître"),
+              ("N", "NON-DÉTECTION", "Pourquoi le problème n'a-t-il pas été détecté ni arrêté")]
+FTA_QUESTIONS = [
+    ("Standard existant", "Existe-t-il un standard (procédure, instruction, règle, plan de contrôle…) "
+                          "qui encadre ce point ?"),
+    ("Standard appliqué", "Ce standard est-il appliqué sur le terrain, par tous et en permanence ?"),
+    ("Standard robuste", "Ce standard est-il robuste : clair, à l'épreuve des erreurs et des variations, "
+                         "sans dépendre d'une personne ?")]
+POURQUOI_MIN = 5
+FIN_SAISIE = {"-", "ok", "fin", "non", "rien", "aucune", "aucun", "fini", "terminé", "termine", "suivant"}
+RE_OUINON = re.compile(r"^\s*(oui|o|yes|y|non|n|no)\b[\s,.:;!\-]*(.*)$", re.I | re.S)
+
+def rca_calcul(ev):
+    """Rejoue le journal : phase (ish, fta, pq, fin), position courante, causes, verdicts, pourquoi."""
+    S = {"ph": "ish", "dim": 0, "m": 0, "causes": [], "fta": {}, "fi": 0, "fq": 0,
+         "prouvees": [], "pi": 0, "why": {}, "racine": {}}
+
+    def suite():
+        if S["ph"] == "ish" and S["dim"] >= 2:
+            S["ph"] = "fta"
+        if S["ph"] == "fta" and S["fi"] >= len(S["causes"]):
+            S["prouvees"] = [c["id"] for c in S["causes"] if S["fta"].get(c["id"], {}).get("v") == "prouvee"]
+            S["ph"] = "pq"
+        if S["ph"] == "pq" and S["pi"] >= len(S["prouvees"]):
+            S["ph"] = "fin"
+    suite()
+    for e in ev:
+        k = e[0]
+        if S["ph"] == "ish":
+            if k == "c":
+                n = 1 + sum(1 for c in S["causes"] if c["dim"] == S["dim"] and c["m"] == S["m"])
+                S["causes"].append({"id": f"{DIMENSIONS[S['dim']][0]}{S['m'] + 1}.{n}",
+                                    "dim": S["dim"], "m": S["m"], "t": e[1]})
+            elif k == "m":
+                S["m"] += 1
+                if S["m"] >= len(SIX_M):
+                    S["m"], S["dim"] = 0, S["dim"] + 1
+        elif S["ph"] == "fta":
+            c = S["causes"][S["fi"]]
+            f = S["fta"].setdefault(c["id"], {"r": [], "v": None})
+            if k == "f":
+                f["r"].append([e[1], e[2] if len(e) > 2 else ""])
+                if e[1] == "non":
+                    f["v"], S["fi"], S["fq"] = "prouvee", S["fi"] + 1, 0
+                else:
+                    S["fq"] += 1
+                    if S["fq"] >= len(FTA_QUESTIONS):
+                        f["v"], S["fi"], S["fq"] = "ecartee", S["fi"] + 1, 0
+            elif k == "fs":
+                f["v"], S["fi"], S["fq"] = "non evaluee", S["fi"] + 1, 0
+        elif S["ph"] == "pq":
+            cid = S["prouvees"][S["pi"]]
+            if k == "p":
+                S["why"].setdefault(cid, []).append(e[1])
+            elif k == "pe":
+                S["racine"][cid] = True
+                S["pi"] += 1
+        suite()
+    return S
+
+def rca_lib(c):
+    return f"{c['id']} ({SIX_M[c['m']][0]})"
+
+def rca_diagramme(S, dim):
+    lignes = [f"🐟 Ishikawa {DIMENSIONS[dim][1]}"]
+    for m, (nom, _) in enumerate(SIX_M):
+        cs = [c for c in S["causes"] if c["dim"] == dim and c["m"] == m]
+        lignes.append(f"{m + 1} {nom}")
+        lignes += [f"    {c['id']}  {c['t']}" for c in cs] or ["    (aucune cause)"]
+    return "\n".join(lignes)
+
+def rca_resume(S):
+    """Texte de la réponse D5 : causes racines d'abord (le contexte transmis à D6 est tronqué par la fin)."""
+    L = []
+    prouvees = [c for c in S["causes"] if S["fta"].get(c["id"], {}).get("v") == "prouvee"]
+    if S["ph"] != "fin":
+        L.append("(analyse en cours)")
+    if any(S["why"].values()):
+        L.append("CAUSES RACINES (5 Pourquoi)")
+        for c in prouvees:
+            w = S["why"].get(c["id"])
+            if w:
+                L.append(f"- {rca_lib(c)} : « {c['t']} » → "
+                         f"{'cause racine' if S['racine'].get(c['id']) else 'en cours'} : {w[-1]}")
+        L += ["", "CHAÎNES DE POURQUOI"]
+        for c in prouvees:
+            w = S["why"].get(c["id"])
+            if w:
+                L.append(f"- {c['id']} : " + " → ".join(f"({i}) {x}" for i, x in enumerate(w, 1)))
+    if prouvees:
+        L += ["", "CAUSES PROUVÉES (FTA : au moins un « non »)"]
+        for c in prouvees:
+            r = S["fta"][c["id"]]["r"]
+            i = next(i for i, x in enumerate(r) if x[0] == "non")
+            note = f" — {r[i][1]}" if r[i][1] else ""
+            L.append(f"- {rca_lib(c)} : « {c['t']} » — non : {FTA_QUESTIONS[i][0].lower()}{note}")
+    ecartees = [c["id"] for c in S["causes"] if S["fta"].get(c["id"], {}).get("v") == "ecartee"]
+    non_eval = [c["id"] for c in S["causes"] if S["fta"].get(c["id"], {}).get("v") == "non evaluee"]
+    if ecartees:
+        L += ["", "CAUSES ÉCARTÉES (standard existant, appliqué et robuste) : " + ", ".join(ecartees)]
+    if non_eval:
+        L += ["", "CAUSES NON ÉVALUÉES : " + ", ".join(non_eval)]
+    for dim in (0, 1):
+        cs = [c for c in S["causes"] if c["dim"] == dim]
+        if cs or S["dim"] > dim or S["ph"] != "ish":
+            L += ["", f"ISHIKAWA {DIMENSIONS[dim][1]}"]
+            for m, (nom, _) in enumerate(SIX_M):
+                x = [c for c in cs if c["m"] == m]
+                L.append(f"- {m + 1} {nom} : " + (" ; ".join(f"{c['id']} {c['t']}" for c in x) if x else "—"))
+    return "\n".join(L).strip()
 
 class Session:
     def __init__(self, uid):
@@ -1087,6 +1209,7 @@ class Session:
         self.fil = {}             # code d'étape -> [{"r", "t", "d"}] : TOUS les échanges
         self.qr = {}              # mode guidé : code d'étape -> {"i": question en cours, "r": {n: réponse}, "rel": n|None}
         self.brouillon = ""       # réponse en cours (cumul de vos messages sur l'étape)
+        self.rca = {"ev": []}     # D5 : journal des saisies (causes Ishikawa, réponses FTA, pourquoi)
         self.fini = False
         self.debut = ""
         self.maj = ""
@@ -1115,6 +1238,16 @@ class Session:
         self.idx = min(max(int(self.idx or 0), 0), len(self.etapes) - 1)
         if self.brouillon and self.code not in self.qr and not self.fini:
             self.qetat()["c"] = self.brouillon           # projet saisi en mode libre : texte conservé
+        st = self.qr.get("D5")
+        if self.methode == "8d" and st and not (self.rca or {}).get("ev") \
+                and any(k in (st.get("r") or {}) for k in ("1", "2", "3", "4")):
+            anciens = ["6M — Machine, Matière, Main-d'œuvre", "6M — Méthodes, Milieu, Mesure",
+                       "Facteurs prouvés (FTA)", "Cause racine d'occurrence", "Cause racine de non-détection"]
+            st["r"] = {"0": "(ancien format de l'étape)\n" + "\n".join(
+                f"{lib} : {st['r'][str(n)]}" for n, lib in enumerate(anciens) if st["r"].get(str(n)))}
+            st["i"] = 1
+        if not isinstance(self.rca, dict) or "ev" not in self.rca:
+            self.rca = {"ev": []}
         return True
 
     def _migrer_ancien(self):
@@ -1197,7 +1330,13 @@ class Session:
         lignes = [f"📍 Étape {self.idx + 1}/{len(self.etapes)} — {e['code']} · {e['titre']}",
                   f"❓ {e['question']}",
                   f"🎯 Attendu : {e['attendu']}"]
-        if self.guide_actif():
+        if self.rca_step():
+            lignes.append(f"🛠 Outils : {e['outils']}")
+            lignes.append("👉 Trois temps : (1) Ishikawa 6M, une cause à la fois, d'abord pour l'occurrence puis "
+                          "pour la non-détection ; (2) FTA : pour chaque cause, un standard existe-t-il, "
+                          "est-il appliqué, est-il robuste ? ; (3) 5 Pourquoi sur les causes prouvées "
+                          "(au moins un « non » au FTA). /prec annule la dernière saisie.")
+        elif self.guide_actif():
             n = len(self.questions())
             lignes.append(f"🛠 Outils : {e['outils']}")
             lignes.append(f"👉 Je vais vous poser {n} question{'s' if n > 1 else ''}, une par une. "
@@ -1211,6 +1350,8 @@ class Session:
         return "\n".join(lignes)
 
     def question_msg(self):
+        if self.rca_actif():
+            return self.rca_prompt()
         st = self.qetat()
         qs = self.questions()
         i = st["i"]
@@ -1394,7 +1535,7 @@ class Session:
                        "(/reponse), puis validez.", BTN_FIN_QUESTIONS)
         prompt = (
             self.entete() + self.photos_etape() +
-            f"\nRéponses de l'utilisateur à cette étape (question par question) :\n{self.brouillon}\n\n"
+            f"\nRéponses de l'utilisateur à cette étape (question par question) :\n{coupe(self.brouillon, 3000)}\n\n"
             "Fais une revue brève de l'étape par rapport à l'attendu (80 mots maximum). Première ligne "
             "EXACTEMENT « VERDICT : SUFFISANT » ou « VERDICT : À COMPLÉTER ». Ensuite, au plus 2 manques "
             "précis (faits, chiffres, preuves absents). Ne pose pas de question et ne reformule pas."
@@ -1411,6 +1552,8 @@ class Session:
 
     def repondre_guide(self, t):
         """Mode guidé : t est la réponse à la question en cours. Retourne la liste des messages."""
+        if self.rca_actif():
+            return self.rca_repondre(t)
         st = self.qetat()
         qs = self.questions()
         i = st["i"]
@@ -1461,6 +1604,177 @@ class Session:
             self.save()
             return sortie
         return [self.question_msg()]
+
+    # -- D5 : Ishikawa 6M → FTA → 5 Pourquoi -----------------------------------------
+    def rca_step(self):
+        return self.methode == "8d" and self.code == "D5" and self.guide_actif() and not self.fini
+
+    def rca_actif(self):
+        return self.rca_step() and self.qetat()["i"] == 0
+
+    def rca_etat(self):
+        return rca_calcul(self.rca["ev"])
+
+    def rca_prompt(self, S=None):
+        S = S or self.rca_etat()
+        if S["ph"] == "ish":
+            d, (nom, desc) = DIMENSIONS[S["dim"]], SIX_M[S["m"]]
+            n = 1 + sum(1 for c in S["causes"] if c["dim"] == S["dim"] and c["m"] == S["m"])
+            cid = f"{d[0]}{S['m'] + 1}.{n}"
+            tete = f"🐟 Ishikawa {d[1]} — facteur {S['m'] + 1}/{len(SIX_M)} : {nom}"
+            if n == 1:
+                corps = (f"{nom} : {desc}.\n{d[2]} à cause de ce facteur ? Écrivez UNE cause "
+                         f"(n° {cid}), ou « - » s'il n'y en a aucune.")
+            else:
+                corps = f"Une autre cause {nom} ({cid}) ? Écrivez-la, ou « - » s'il n'y en a plus."
+            return msg(f"{tete}\n{corps}", BTN_RCA_ISH)
+        if S["ph"] == "fta":
+            c = S["causes"][S["fi"]]
+            lib, q = FTA_QUESTIONS[S["fq"]]
+            return msg(f"🌳 FTA — cause {rca_lib(c)} : « {c['t']} » ({S['fi'] + 1}/{len(S['causes'])})\n"
+                       f"Question {S['fq'] + 1}/{len(FTA_QUESTIONS)} — {lib}\n{q}\n"
+                       "Répondez par oui ou non (un commentaire peut suivre).", BTN_RCA_FTA)
+        if S["ph"] == "pq":
+            cid = S["prouvees"][S["pi"]]
+            c = next(x for x in S["causes"] if x["id"] == cid)
+            w = S["why"].get(cid, [])
+            n = len(w) + 1
+            tete = (f"❓ 5 Pourquoi — cause prouvée {rca_lib(c)} : « {c['t']} » "
+                    f"({S['pi'] + 1}/{len(S['prouvees'])})")
+            if n == 1:
+                corps = "Pourquoi 1 : pourquoi cette cause est-elle présente ?"
+            else:
+                corps = f"Pourquoi {n} : pourquoi « {coupe(w[-1], 140)} » ?"
+                if n > POURQUOI_MIN:
+                    corps += ("\nContinuez tant que vous n'avez pas atteint la cause racine ; "
+                              "« - » (ou /fin) quand la dernière réponse est la cause racine.")
+            return msg(f"{tete}\n{corps}", BTN_RCA_PQ)
+        return msg("🏁 Analyse des causes terminée. /ok pour valider l'étape, /prec pour corriger.",
+                   BTN_FIN_QUESTIONS)
+
+    def rca_sync(self, S):
+        st = self.qetat()
+        st["r"]["0"] = rca_resume(S)
+        self.synchroniser()
+        self.save()
+
+    def rca_suite(self, A, avant=()):
+        """Après un événement : transitions de phase, synchro de la réponse D5, question suivante."""
+        B = self.rca_etat()
+        out = list(avant)
+        if B["dim"] > A["dim"]:
+            out.append(rca_diagramme(B, A["dim"]))
+        if A["ph"] == "ish" and B["ph"] != "ish":
+            n = len(B["causes"])
+            out.append(f"🌳 FTA : {n} cause{'s' if n > 1 else ''} à examiner. Pour chacune : un standard "
+                       "existe-t-il, est-il appliqué, est-il robuste ? Dès qu'une réponse est « non », la "
+                       "cause est retenue comme prouvée." if n else
+                       "Aucune cause saisie : il n'y a rien à analyser avec le FTA.")
+        if A["ph"] == "fta" and B["ph"] != "fta":
+            p = [c for c in B["causes"] if c["id"] in B["prouvees"]]
+            out.append(f"🌳 FTA terminé : {len(p)} cause{'s' if len(p) > 1 else ''} prouvée"
+                       f"{'s' if len(p) > 1 else ''} sur {len(B['causes'])}."
+                       + ("\n" + "\n".join(f"• {rca_lib(c)} : {c['t']}" for c in p) if p else "")
+                       + ("\nLes 5 Pourquoi suivent, cause par cause." if p else ""))
+        self.rca_sync(B)
+        if B["ph"] == "fin":
+            out.append("🏁 Analyse des causes terminée.")
+            return out + self.avancer_question()
+        return out + [self.rca_prompt(B)]
+
+    def rca_repondre(self, t):
+        A = self.rca_etat()
+        ev = self.rca["ev"]
+        if A["ph"] == "ish":
+            if t.lower().strip(" .!") in FIN_SAISIE:
+                return self.rca_commande("sauter")
+            ev.append(["c", t])
+            n = 1 + sum(1 for c in A["causes"] if c["dim"] == A["dim"] and c["m"] == A["m"])
+            cid = f"{DIMENSIONS[A['dim']][0]}{A['m'] + 1}.{n}"
+            self.noter("u", f"[Cause {cid}] {t}")
+            return self.rca_suite(A, [f"✅ {cid} enregistrée."])
+        if A["ph"] == "fta":
+            m = RE_OUINON.match(t)
+            if not m:
+                return [msg("Répondez par oui ou non (vous pouvez ajouter un commentaire après).",
+                            BTN_RCA_FTA)]
+            return self.rca_oui_non("oui" if m.group(1).lower() in ("oui", "o", "yes", "y") else "non",
+                                    m.group(2).strip())
+        if A["ph"] == "pq":
+            if t.lower().strip(" .!") in ("-", "fin", "terminé", "termine", "fini", "racine"):
+                return self.rca_commande("fin")
+            cid = A["prouvees"][A["pi"]]
+            n = len(A["why"].get(cid, [])) + 1
+            ev.append(["p", t])
+            self._pq_alerte = None
+            self.noter("u", f"[Pourquoi {n} · {cid}] {t}")
+            return self.rca_suite(A)
+        return [self.rca_prompt(A)]
+
+    def rca_oui_non(self, rep, note=""):
+        A = self.rca_etat()
+        if A["ph"] != "fta":
+            return ["« /oui » et « /non » répondent aux questions du FTA (étape D5 du 8D)."]
+        c = A["causes"][A["fi"]]
+        lib = FTA_QUESTIONS[A["fq"]][0]
+        self.rca["ev"].append(["f", rep, note])
+        self.noter("u", f"[FTA {c['id']} · {lib}] {rep}" + (f" — {note}" if note else ""))
+        if rep == "non":
+            info = [f"🔴 {c['id']} : « {lib.lower()} » = non → cause PROUVÉE (5 Pourquoi à suivre)."]
+        elif A["fq"] + 1 >= len(FTA_QUESTIONS):
+            info = [f"🟢 {c['id']} : standard existant, appliqué et robuste → cause écartée."]
+        else:
+            info = []
+        return self.rca_suite(A, info)
+
+    def rca_commande(self, nom):
+        """/sauter, /fin (ou « - ») pendant l'analyse : fin du facteur, cause non évaluée, fin des pourquoi."""
+        A = self.rca_etat()
+        ev = self.rca["ev"]
+        if A["ph"] == "ish":
+            self.noter("s", f"Facteur {SIX_M[A['m']][0]} ({DIMENSIONS[A['dim']][1]}) terminé.")
+            ev.append(["m"])
+            return self.rca_suite(A)
+        if A["ph"] == "fta":
+            if nom == "fin":
+                return ["« /fin » termine un facteur ou les pourquoi ; ici répondez oui ou non "
+                        "(/sauter laisse la cause non évaluée)."]
+            c = A["causes"][A["fi"]]
+            self.noter("s", f"Cause {c['id']} non évaluée.")
+            ev.append(["fs"])
+            return self.rca_suite(A, [f"⏭️ {c['id']} laissée non évaluée."])
+        if A["ph"] == "pq":
+            cid = A["prouvees"][A["pi"]]
+            w = A["why"].get(cid, [])
+            if not w:
+                return [msg("Écrivez d'abord au moins un pourquoi.", BTN_RCA_PQ)]
+            if len(w) < POURQUOI_MIN and getattr(self, "_pq_alerte", None) != cid:
+                self._pq_alerte = cid
+                return [msg(f"⚠️ {len(w)} pourquoi seulement ({POURQUOI_MIN} au minimum sont attendus). "
+                            "Êtes-vous bien à la cause racine ? Répétez « - » (ou /fin) pour confirmer, "
+                            "sinon continuez à répondre.", BTN_RCA_PQ)]
+            self._pq_alerte = None
+            ev.append(["pe"])
+            self.noter("s", f"Cause racine de {cid} : {w[-1]}")
+            return self.rca_suite(A, [f"🏁 Cause racine de {cid} : « {coupe(w[-1], 200)} »."])
+        return [self.rca_prompt(A)]
+
+    def rca_prec(self):
+        st = self.qetat()
+        if st["i"] >= 1:                                   # analyse terminée : on la rouvre
+            st["i"] = 0
+        ev = self.rca["ev"]
+        if not ev:
+            self.save()
+            return [msg("Rien à annuler : l'analyse n'a pas encore commencé.", self.rca_prompt()["boutons"])]
+        derniere = ev.pop()
+        self._pq_alerte = None
+        self.noter("s", "Dernière saisie annulée.")
+        B = self.rca_etat()
+        self.rca_sync(B)
+        quoi = {"c": "la dernière cause", "m": "la fin du facteur", "f": "la dernière réponse FTA",
+                "fs": "le saut de la cause", "p": "le dernier pourquoi", "pe": "la fin des pourquoi"}[derniere[0]]
+        return [f"↩️ Annulé : {quoi}.", self.rca_prompt(B)]
 
     def coach_question(self, question):
         prompt = (self.entete() + self.fil_pour_llm() +
@@ -1562,6 +1876,10 @@ class Session:
                     if self.guide_actif() else
                     "Rien à valider : rédigez d'abord votre réponse à l'étape "
                     "(l'analyse d'une photo ne remplace pas vos propres constats)."], None
+        if self.rca_actif() and not force:
+            return [msg("⚠️ L'analyse des causes (Ishikawa, FTA, 5 Pourquoi) n'est pas terminée. "
+                        "Valider quand même ?",
+                        [[("✅ Valider quand même", "/ok force"), ("▶️ Continuer", "/guide")]])], None
         if self.guide_actif() and self.questions_restantes() and not force:
             n = self.questions_restantes()
             return [msg(f"⚠️ Il reste {n} question{'s' if n > 1 else ''} dans cette étape. "
@@ -1773,7 +2091,7 @@ class Session:
         self.attend_titre = False
         self.prefs["actif"] = None
         self.sauver_prefs()
-        return [msg(f"📦 Projet « {titre} » mis de côté (conservé). /projets pour le rouvrir.",
+        return [msg(f"📦 Projet « {titre} » mis de côté (conservé). /projets pour le ré-ouvrir.",
                     BTN_DEMARRER)]
 
     def supprimer(self, arg):
@@ -1826,7 +2144,7 @@ class Session:
         lignes.append(f"\n🧭 Mode : {self.mode} — {MODES[self.mode]}")
         boutons.append([(("✅ " if self.mode == m else "") + lib, f"/mode {m}")
                         for m, lib in (("guide", "Guidé"), ("rapide", "Rapide"), ("libre", "Libre"))])
-        lignes.append("\nTaper : /modele b groq|ollama · /modele t <n|nom> · /modele v <n|nom> · /mode guide|rapide|libre")
+        lignes.append("\nTaper : /modele b groq|ollama   /modele t <n|nom>   /modele v <n|nom>   /mode guide|rapide|libre")
         boutons.append([("📊 État", "/etat")])
         return msg("\n".join(lignes), boutons, remplace=True)
 
@@ -1947,8 +2265,14 @@ class Session:
                 self.fini = False
                 self.brouillon = self.reponses.pop(self.code, "")
                 return self.reouvrir_etape("↩️ Démarche rouverte.")
-            return [msg("Démarche terminée. /rapport complet, /retour pour rouvrir la dernière étape, "
+            return [msg("Démarche terminée. /rapport complet, /retour pour ré-ouvrir la dernière étape, "
                         "ou une nouvelle démarche.", BTN_FIN)], None
+        if nom in ("sauter", "fin") and self.rca_actif():
+            return self.rca_commande(nom), None
+        if nom in ("oui", "non") and self.rca_actif():
+            return self.rca_oui_non(nom), None
+        if nom in ("oui", "non", "fin"):
+            return ["Cette commande ne sert que pendant l'analyse des causes (étape D5 du 8D)."], None
         if nom == "ok":
             return self.valider(force=arg.strip().lower() in ("force", "!"))
         if nom == "sauter":
@@ -1961,6 +2285,8 @@ class Session:
         if nom == "prec":
             if not self.guide_actif():
                 return ["« /prec » concerne le mode guidé (/mode guide)."], None
+            if self.rca_step():
+                return self.rca_prec(), None
             st = self.qetat()
             if st["i"] <= 0:
                 return ["Vous êtes déjà à la première question de l'étape."], None
@@ -1971,6 +2297,8 @@ class Session:
         if nom == "effacer":
             self.brouillon = ""
             self.qr[self.code] = {"i": 0, "r": {}, "rel": None}
+            if self.methode == "8d" and self.code == "D5":
+                self.rca = {"ev": []}
             self.noter("s", "Réponses de l'étape effacées.")
             self.save()
             return ["🧹 Réponses de l'étape effacées (l'historique de la conversation est conservé)."]\
@@ -2098,7 +2426,7 @@ C_CYAN, C_JAUNE, C_ROUGE, C_VERT, C_GRIS, C_GRAS = "1;36", "1;33", "1;31", "1;32
 RE_CMD = re.compile(r"(?<![\w/~.:])(/[a-zé0-9][\w]*)")
 RE_GRAS = re.compile(r"\*\*(.+?)\*\*")
 RE_LIBELLE = re.compile(r"^((?:[^\w\s/]\S*\s+)?[A-ZÉÀ][^:\n]{0,30}? :)(?=\s|$)")
-TETES = ("📍", "🚀", "🧭", "📂", "📜", "🎉", "🔎", "💬", "❓", "🤖", "📄", "🧾", "🗂")
+TETES = ("🐟", "🌳", "📍", "🚀", "🧭", "📂", "📜", "🎉", "🔎", "💬", "❓", "🤖", "📄", "🧾", "🗂")
 COULEUR_ACTIVE = True
 
 def teinte(code, texte):
@@ -2108,27 +2436,19 @@ def largeur_terminal():
     import shutil
     return max(60, shutil.get_terminal_size((100, 30)).columns - 1)
 
-def agrandir_terminal(cols=130, rows=48):
-    """Demande au terminal de s'agrandir (séquence xterm « resize ») s'il est plus petit.
-    Ignoré sans terminal interactif ; certains terminaux la refusent (voir README : --cols/--rows)."""
+def agrandir_terminal(cols=110, rows=38):
+    """Demande au terminal de prendre la taille voulue (séquence xterm « resize »), en plus petit comme
+    en plus grand : la fenêtre n'occupe pas tout l'écran. Ignoré sans terminal interactif ; certains
+    terminaux la refusent (voir README : --cols/--rows, --no-resize)."""
     import shutil
     if not sys.stdout.isatty() or os.environ.get("TERM", "") in ("", "dumb", "linux"):
         return
     taille = shutil.get_terminal_size((0, 0))
-    if taille.columns >= cols and taille.lines >= rows:
+    if taille.columns == cols and taille.lines == rows:
         return
-    sys.stdout.write(f"\033[8;{max(rows, taille.lines)};{max(cols, taille.columns)}t")
+    sys.stdout.write(f"\033[8;{rows};{cols}t")
     sys.stdout.flush()
     time.sleep(0.3)
-    apres = shutil.get_terminal_size((0, 0))
-    if apres.columns < cols and os.environ.get("DISPLAY") and shutil.which("wmctrl"):
-        try:                                   # terminal qui refuse « resize » : on le maximise (X11)
-            import subprocess
-            subprocess.run(["wmctrl", "-r", ":ACTIVE:", "-b", "add,maximized_vert,maximized_horz"],
-                           timeout=3, capture_output=True)
-            time.sleep(0.3)
-        except Exception:
-            pass
 
 def rendre_cli(texte):
     """Mise en forme terminal : markdown léger, retour à la ligne à la largeur réelle, couleurs."""
@@ -2267,10 +2587,10 @@ def main():
     ap.add_argument("--no-splash", action="store_true", help="n'affiche pas l'écran d'accueil")
     ap.add_argument("--no-color", action="store_true", help="désactive les couleurs")
     ap.add_argument("--no-resize", action="store_true", help="ne change pas la taille de la fenêtre")
-    ap.add_argument("--cols", type=int, default=int(os.getenv("PS_COLS", "130")),
-                    help="largeur souhaitée de la fenêtre (défaut 130)")
-    ap.add_argument("--rows", type=int, default=int(os.getenv("PS_ROWS", "48")),
-                    help="hauteur souhaitée de la fenêtre (défaut 48)")
+    ap.add_argument("--cols", type=int, default=int(os.getenv("PS_COLS", "110")),
+                    help="largeur souhaitée de la fenêtre (défaut 110)")
+    ap.add_argument("--rows", type=int, default=int(os.getenv("PS_ROWS", "38")),
+                    help="hauteur souhaitée de la fenêtre (défaut 38)")
     args = ap.parse_args()
     COULEUR_ACTIVE = sys.stdout.isatty() and not args.no_color and "NO_COLOR" not in os.environ
     if not args.no_resize:
