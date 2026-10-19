@@ -12,7 +12,7 @@
 #  - Conversation : TOUS les échanges de chaque étape (réponses, retours du coach, questions, photos)
 #    sont conservés dans le projet et réinjectés dans le contexte du coach.
 #  - Projets : enregistrement automatique à chaque message + /sauver ; plusieurs projets par
-#    utilisateur ; /projets et /charger pour les rouvrir avec leur historique ; /titre à tout moment.
+#    utilisateur ; /projets et /charger pour les ré-ouvrir avec leur historique ; /titre à tout moment.
 #  - Modèles : /modele change de moteur (Groq / Ollama) et de modèle (texte et photos), à chaud ;
 #    le choix est mémorisé. Repli automatique Groq sur GROQ_FALLBACK_MODEL (429 / 413).
 #  - Boutons : chaque message peut porter des boutons ; un bouton = une commande
@@ -671,22 +671,22 @@ SYSTEM_PROMPT = (
 # ----------------------------------------------------------------------------
 AIDE_SECTIONS = [
     ("DÉMARCHES", [
-        ("/8d [titre]", "8D : résolution en équipe, sur 8 étapes & Synthèse", ""),
+        ("/8d [titre]", "8D : Résolution en équipe, sur 8 étapes & Synthèse", ""),
         ("/a3 [titre]", "A3 : du contexte jusqu'aux enseignements, sur une feuille A3", ""),
-        ("/pdca [titre]", "PDCA : cycle court Planifier · Réaliser · Vérifier · Ajuster", ""),
-        ("/k6pts [titre]", "Kaizen 6 points : Observer, Tester, Retenir ce qui marche", ""),
+        ("/pdca [titre]", "PDCA (cycle court) : Planifier, Réaliser, Vérifier, Ajuster", ""),
+        ("/k6pts [titre]", "Kaizen 6 points    : Observer, Tester, Retenir ce qui marche", ""),
     ]),
     ("PENDANT UNE DÉMARCHE", [
         ("(votre réponse)", "Répondez à la question ; le coach relance si nécessaire", ""),
-        ("-  ou  /sauter", "Laisse la question sans réponse", ""),
+        ("  -    ou   /sauter", "Laisse la question sans réponse", ""),
         ("/prec", "Revient à la question précédente", ""),
         ("phrase avec ?", "Pose une question au coach (la question en cours reste posée)", ""),
         ("photo", "Envoyez une photo (légende = question) : analysée, jointe au rapport", "tg"),
         ("/photo <chemin> [légende]", "Analyse une image, jointe au rapport", "cli"),
-        ("/ok   ou   ok", "Valide l'étape", ""),
-        ("/passer   /retour", "Passe l'étape / Revient à l'étape précédente", ""),
-        ("/reponse  /effacer", "Relit vos réponses de l'étape / Recommence l'étape", ""),
-        ("/guide    /etat", "Rappelle l'attendu et la question / Résumé des étapes", ""),
+        ("/ok    ou    ok", "Valide l'étape", ""),
+        ("/passer     /retour", "Passe l'étape / Revient à l'étape précédente", ""),
+        ("/reponse    /effacer", "Relit vos réponses de l'étape / Recommence l'étape", ""),
+        ("/guide      /etat", "Rappelle l'attendu et la question / Résumé des étapes", ""),
         ("/oui  /non  /fin", "D5 : réponse FTA / fin d'un facteur ou des pourquoi", ""),
     ]),
     ("MODE DU COACH", [
@@ -697,7 +697,7 @@ AIDE_SECTIONS = [
     ("PROJETS", [
         ("/projets", "Liste de vos projets", ""),
         ("/charger <n>", "Ré-ouvre un projet avec tout son historique", ""),
-        ("/sauver   /stop", "Enregistre (automatiquement) / Met de côté", ""),
+        ("/sauver     /stop", "Enregistre (automatiquement) / Met de côté", ""),
         ("/titre [texte]", "Définit ou modifie le titre, à tout moment", ""),
         ("/historique [étape|tout]", "Relit les échanges conservés", ""),
         ("/rapport [complet]", "Génère le rapport (complet avec tous les échanges)", ""),
@@ -708,13 +708,13 @@ AIDE_SECTIONS = [
         ("/backend groq|ollama", "Raccourci pour changer de moteur", ""),
     ]),
     ("AIDE ET SORTIE", [
-        ("/aide  ou  /help", "Affiche ce menu", ""),
-        ("/q     ou  /quit", "Quitte le programme (& enregistre le projet)", "cli"),
+        ("/aide  ou   /help", "Affiche ce menu", ""),
+        ("/q     ou   /quit", "Quitte le programme (& enregistre le projet)", "cli"),
     ]),
 ]
 # Menu court affiché au lancement du terminal : l'essentiel sur quelques lignes
 AIDE_COURTE = [
-    ("/8d   /a3   /pdca   /k6pts", "Démarre une démarche (ajouter un titre)"),
+    ("/8d  /a3  /pdca     /k6pts", "Démarre une démarche (ajouter un titre)"),
     ("/projets  /charger <n>", "Liste / Ré-ouvre un projet"),
     ("/ok       /sauter   /prec", "Valide l'étape / Avance / Retour arrière"),
     ("/modele", "Moteur et modèles"),
@@ -722,7 +722,7 @@ AIDE_COURTE = [
     ("/q     ou  /quit", "Quitte (& enregistre le projet)"),
 ]
 AIDE_CONFIDENTIALITE = ("Confidentialité : avec Groq, les photos partent dans le cloud ; avec Ollama, elles "
-                        "restent sur le Pi5. Évitez visages et infos confidentiels.")
+                        "restent sur le Pi5.\n                     Évitez visages et infos confidentiels.")
 
 def aide_texte():
     """Menu en liste (Telegram, ou terminal étroit) : sections puis « commande — rôle »."""
@@ -1747,7 +1747,7 @@ class Session:
             cid = A["prouvees"][A["pi"]]
             w = A["why"].get(cid, [])
             if not w:
-                return [msg("Écrivez d'abord au moins un pourquoi.", BTN_RCA_PQ)]
+                return [msg("Écrivez au moins un pourquoi.", BTN_RCA_PQ)]
             if len(w) < POURQUOI_MIN and getattr(self, "_pq_alerte", None) != cid:
                 self._pq_alerte = cid
                 return [msg(f"⚠️ {len(w)} pourquoi seulement ({POURQUOI_MIN} au minimum sont attendus). "
@@ -1761,7 +1761,7 @@ class Session:
 
     def rca_prec(self):
         st = self.qetat()
-        if st["i"] >= 1:                                   # analyse terminée : on la rouvre
+        if st["i"] >= 1:                                   # analyse terminée : on la ré-ouvre
             st["i"] = 0
         ev = self.rca["ev"]
         if not ev:
@@ -1871,10 +1871,10 @@ class Session:
     def valider(self, force=False):
         self.synchroniser()
         if not self.brouillon:
-            return ["Rien à valider : répondez d'abord à au moins une question de l'étape "
+            return ["Rien à valider : répondez à au moins une question de l'étape "
                     "(l'analyse d'une photo ne remplace pas vos propres constats)."
                     if self.guide_actif() else
-                    "Rien à valider : rédigez d'abord votre réponse à l'étape "
+                    "Rien à valider : rédigez votre réponse à l'étape "
                     "(l'analyse d'une photo ne remplace pas vos propres constats)."], None
         if self.rca_actif() and not force:
             return [msg("⚠️ L'analyse des causes (Ishikawa, FTA, 5 Pourquoi) n'est pas terminée. "
@@ -2010,14 +2010,14 @@ class Session:
         projets = self.projets()
         if not projets:
             return msg("📭 Aucun projet enregistré. Démarrez avec /8d, /a3, /pdca ou /k6pts.", BTN_DEMARRER)
-        lignes = ["📂 Vos projets (le plus récent d'abord) :"]
+        lignes = ["📂 Vos projets (à partir du plus récent) :"]
         boutons = []
         for i, (pid, d) in enumerate(projets[:10], 1):
             actif = "▶️ " if pid == self.pid else ""
             lignes.append(f"{i}. {actif}{self._resume_projet(d)}")
             lib = f"{'▶️ ' if pid == self.pid else ''}{i}. {coupe(d.get('titre', 'Sans titre'), 28)} ({METHODES[d['methode']]['nom']})"
             boutons.append([(lib, f"/charger {pid}")])
-        lignes.append("\n/charger <n> pour rouvrir · /supprimer <n> pour effacer")
+        lignes.append("\n/charger <n> pour ré-ouvrir · /supprimer <n> pour effacer")
         return msg("\n".join(lignes), boutons, remplace=True)
 
     def _resoudre_projet(self, arg):
@@ -2241,7 +2241,7 @@ class Session:
         if nom == "etat":
             return [self.etat()], None
         if not self.methode:
-            return [msg("Aucune démarche en cours : choisissez une méthode, ou rouvrez un projet.",
+            return [msg("Aucune démarche en cours : choisissez une méthode, ou ré-ouvrez un projet.",
                         BTN_DEMARRER)], None
         if nom == "titre":
             return self.cmd_titre(arg), None
@@ -2345,7 +2345,7 @@ class Session:
         if self.attend_titre and self.methode:
             return self.definir_titre(t), None
         if not self.methode:
-            return [msg("Choisissez une méthode (ou rouvrez un projet avec /projets) :",
+            return [msg("Choisissez une méthode (ou ré-ouvrez un projet avec /projets) :",
                         BTN_DEMARRER)], None
         if self.fini:
             return [msg("Démarche terminée. /rapport complet, /retour pour rouvrir la dernière "
@@ -2436,7 +2436,7 @@ def largeur_terminal():
     import shutil
     return max(60, shutil.get_terminal_size((100, 30)).columns - 1)
 
-def agrandir_terminal(cols=110, rows=38):
+def agrandir_terminal(cols=110, rows=38):           
     """Demande au terminal de prendre la taille voulue (séquence xterm « resize »), en plus petit comme
     en plus grand : la fenêtre n'occupe pas tout l'écran. Ignoré sans terminal interactif ; certains
     terminaux la refusent (voir README : --cols/--rows, --no-resize)."""
@@ -2540,7 +2540,7 @@ def boucle_cli():
     afficher(rendre_cli(aide_tableau(court=True)))
     moteur = s.backend
     modele = s.modele("texte")
-    ligne_moteur = f"🤖 Moteur : {moteur} · {modele} · mode {s.mode} — /aide pour le menu complet · /q pour quitter"
+    ligne_moteur = f"🤖 Moteur : {moteur} · {modele} - mode {s.mode}"
     print("\n" + teinte(C_JAUNE, ligne_moteur))
     if moteur == "ollama":
         print(rendre_cli("⚠️ Moteur local (Ollama) : plus lent. /modele b groq pour repasser sur Groq."))
@@ -2559,7 +2559,7 @@ def boucle_cli():
         if texte.strip().lower() in ("/" + q for q in QUITTER):
             if s.methode:
                 s.save()
-                print(rendre_cli(f"💾 Projet « {s.titre} » enregistré — /projets pour le rouvrir."))
+                print(rendre_cli(f"💾 Projet « {s.titre} » enregistré — /projets pour le ré-ouvrir."))
             print(rendre_cli("À bientôt."))
             break
         attente = bool(texte.strip()) and not texte.lstrip().startswith("/") and s.methode
@@ -2587,9 +2587,9 @@ def main():
     ap.add_argument("--no-splash", action="store_true", help="n'affiche pas l'écran d'accueil")
     ap.add_argument("--no-color", action="store_true", help="désactive les couleurs")
     ap.add_argument("--no-resize", action="store_true", help="ne change pas la taille de la fenêtre")
-    ap.add_argument("--cols", type=int, default=int(os.getenv("PS_COLS", "110")),
+    ap.add_argument("--cols", type=int, default=int(os.getenv("PS_COLS", "110")),       # largeur
                     help="largeur souhaitée de la fenêtre (défaut 110)")
-    ap.add_argument("--rows", type=int, default=int(os.getenv("PS_ROWS", "38")),
+    ap.add_argument("--rows", type=int, default=int(os.getenv("PS_ROWS", "38")),        # hauteur
                     help="hauteur souhaitée de la fenêtre (défaut 38)")
     args = ap.parse_args()
     COULEUR_ACTIVE = sys.stdout.isatty() and not args.no_color and "NO_COLOR" not in os.environ
