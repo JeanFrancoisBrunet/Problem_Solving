@@ -57,7 +57,7 @@ Chaque méthode porte une consigne pour le coach. Exemple pour le **K6pts** (d'a
 ### Mode guidé (par défaut) : une question à la fois
 
 1. L'utilisateur lance une méthode : `/8d Retours clients lot 42`
-2. Le coach présente l'étape (question centrale, attendu, outils), puis pose **les questions de l'étape une par une**. Exemple en 8D / D1 : identification, écart attendu / réel, puis **QQOQCCP déroulé** (Quoi, Qui, Où, Quand, Comment, Combien, Pourquoi), risque, enjeu — 18 questions. Le **QQOQCCP est le même outil en 8D (D1), en A3 (étape 1) et en Kaizen 6 points (K1)**, avec la même structure : le 8D parle de défaut (produit ou processus), l'A3 et le Kaizen d'un défaut **ou** d'une problématique au sens large. Pour **chaque** question du QQOQCCP, le coach demande d'abord l'**Est** (la réponse), puis le **N'est pas** (ce qui pourrait être concerné mais ne l'est pas, pour préciser la réponse) ; le N'est pas peut rester vide (`-`) et n'est jamais relancé par l'IA. Les étapes comptent de 1 à 18 questions (45 en 8D, 42 en A3, 17 en PDCA, 33 en K6pts) ; l'étape **D5 du 8D** suit un déroulé spécifique (voir ci-dessous).
+2. Le coach présente l'étape (question centrale, attendu, outils), puis pose **les questions de l'étape une par une**. Exemple en 8D / D1 : identification, écart attendu / réel, puis **QQOQCCP déroulé** (Quoi, Qui, Où, Quand, Comment, Combien, Pourquoi), risque, enjeu — 18 questions. Le **QQOQCCP est le même outil en 8D (D1), en A3 (étape 1) et en Kaizen 6 points (K1)**, avec la même structure : le 8D parle de défaut (produit ou processus), l'A3 et le Kaizen d'un défaut **ou** d'une problématique au sens large. Pour **chaque** question du QQOQCCP, le coach demande d'abord l'**Est** (la réponse), puis le **N'est pas** (ce qui pourrait être concerné mais ne l'est pas, pour préciser la réponse) ; le N'est pas peut rester vide (`-`) et n'est jamais relancé par l'IA. Les étapes comptent de 1 à 18 questions (45 en 8D, 41 en A3, 17 en PDCA, 34 en K6pts) ; l'étape **D5 du 8D** suit un déroulé spécifique (voir ci-dessous).
 3. Après chaque réponse floue, le coach pose **au plus une relance** ; la réponse à la relance s'ajoute à la précédente et on passe à la question suivante : **le dialogue ne boucle pas**.
 4. Après la dernière question : revue brève de l'étape par rapport à l'attendu (verdict *suffisant* / *à compléter*). L'utilisateur peut ajouter un complément libre, puis tape `/ok`.
 5. À la dernière étape : **revue de cohérence** par le LLM et **rapport Markdown**.
@@ -68,15 +68,17 @@ Les questions sont volontairement **générales**, sans exemple propre à un mé
 
 Pendant les questions : `-` (ou `/sauter`) laisse une question sans réponse, `/prec` revient en arrière, une phrase avec « ? » interroge le coach sans perdre la question en cours, `oui` / `non` restent de simples réponses.
 
-### D5 du 8D : Ishikawa 6M → FTA → 5 Pourquoi
+### Analyse des causes : Ishikawa 6M → FTA → 5 Pourquoi (D5 du 8D, et aussi A3, PDCA, Kaizen 6 points)
+
+C'est le même outil dans toutes les démarches. Il constitue **l'étape D5 du 8D** (occurrence **et** non-détection), **une question de l'étape 4 de l'A3**, **de l'étape P du PDCA** (3ᵉ question) et **de l'étape K2 du Kaizen 6 points** (dernière question), avec l'occurrence seule dans ces trois cas. En A3, PDCA et Kaizen, il est facultatif : `/sanscauses` (ou le bouton « Passer l'analyse des causes ») le passe. La synthèse devient la réponse à cette question.
 
 En modes `guide` et `rapide`, l'étape **D5** se déroule en trois temps, sans appel IA pendant la saisie :
 
 1. **Ishikawa 6M, une cause à la fois** : Machine, Matière, Main-d'œuvre, Méthodes, Milieu, Mesure. Pour chaque facteur, vous écrivez une cause, puis une autre, et `-` (ou `/sauter`, `ok`, `fin`) passe au facteur suivant. Les causes sont numérotées **O1.1, O1.2… O6.n** pour l'**occurrence**, puis le même travail est fait pour la **non-détection** (**N1.1… N6.n**). Le diagramme de chaque Ishikawa est affiché à la fin.
 2. **FTA, cause par cause** : un standard existe-t-il ? est-il appliqué ? est-il robuste ? (réponse `oui` / `non`, commentaire possible, ou boutons). **Au premier « non », la cause est retenue comme prouvée** ; trois « oui » l'écartent. `/sauter` laisse une cause non évaluée.
-3. **5 Pourquoi sur chaque cause prouvée** : au moins 5 pourquoi, plus si nécessaire ; `-` ou `/fin` quand la dernière réponse est la cause racine (une alerte prévient si vous arrêtez avant 5).
+3. **5 Pourquoi en arbre, sur chaque cause prouvée** : une réponse peut avoir plusieurs causes, l'analyse est donc un arbre à plusieurs branches, parcouru en profondeur. Chaque réponse porte un numéro hiérarchique : réponses au 1er pourquoi = **1, 2…** ; leurs enfants = **1.1, 1.2…** ; puis **1.1.1, 1.2.1…** (étiquette complète : `O1.1 › 1.2.1`). Vous répondez « pourquoi ? » de niveau en niveau ; `-` (ou `/fin`, bouton « 🏁 Cause racine atteinte ») termine la branche, et le coach demande alors **une autre réponse au même niveau** (`-` ou « ➡️ Aucune autre réponse » = il n'y en a plus, on remonte d'un niveau). La cause est terminée quand il n'y a plus d'autre réponse au 1er niveau. **Toutes les fins de branche (🎯) sont des causes racines**, chacune fera l'objet d'une action corrective / préventive en D6. Il n'y a pas de nombre imposé : **3 pourquoi peuvent suffire, 5 est un repère, et 6, 7, 8 ou plus sont possibles** : on s'arrête dès que la cause est une cause sur laquelle on peut agir.
 
-`/prec` annule la dernière saisie, à n'importe quel moment. La synthèse (causes racines, chaînes de pourquoi, causes prouvées, écartées, non évaluées, puis les deux Ishikawa) est la réponse de l'étape D5 : elle figure dans le rapport et sert de contexte aux étapes suivantes. En mode `libre`, D5 reste une réponse libre.
+`/prec` annule la dernière saisie, à n'importe quel moment. La synthèse (causes racines = fins de branche, arbres des pourquoi, causes prouvées, écartées, non évaluées, puis les deux Ishikawa) est la réponse de l'étape D5 : elle figure dans le rapport et sert de contexte aux étapes suivantes. En mode `libre`, D5 reste une réponse libre.
 
 ### Trois modes (`/mode`)
 
@@ -108,7 +110,8 @@ Le mode est mémorisé ; passer de `libre` à `guide` conserve le texte déjà s
 | `/reponse` · `/effacer`                                | Relit les réponses de l'étape · recommence l'étape                                            |
 | `/passer` · `/retour`                                  | Saute l'étape · revient à la précédente (ou rouvre la dernière étape d'une démarche terminée) |
 | `/guide`                                               | Rappelle l'étape (attendu, outils) et la question en cours                                    |
-| `/oui` · `/non` · `/fin`                               | D5 : réponse FTA · fin d'un facteur (Ishikawa) ou des pourquoi                                |
+| `/oui` · `/non` · `/fin`                               | Analyse des causes : réponse FTA · fin d'un facteur (Ishikawa) ou d'une branche des pourquoi  |
+| `/sanscauses`                                          | A3, PDCA, Kaizen : passe l'analyse des causes                                                 |
 | `/etat`                                                | Résumé des étapes (✅ faite, 👉 en cours, 📷 photos, 💬 échanges)                             |
 | `/titre [texte]` · `/sauver [titre]`                   | Titre · enregistrement explicite                                                              |
 | `/projets` · `/charger <n>` · `/supprimer <n>`         | Liste, réouverture, suppression                                                               |

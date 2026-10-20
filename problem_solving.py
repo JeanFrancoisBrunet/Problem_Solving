@@ -594,11 +594,10 @@ QUESTIONS = {
         Q("Indicateurs", "Quels indicateurs de résultat et de processus suivrez-vous ?"),
     ],
     ("a3", "4"): [
-        Q("Causes possibles", "Quelles causes possibles voyez-vous (6M : Machine, Matière, Main-d'œuvre, "
-          "Méthodes, Milieu, Mesure) ?"),
+        Q("Analyse des causes (6M, FTA, 5 Pourquoi)",
+          "Analyse en trois temps : Ishikawa 6M, FTA de chaque cause, 5 Pourquoi en arbre sur les causes prouvées "
+          "(« /sanscauses » pour passer cette analyse)."),
         Q("Vérification terrain", "Lesquelles avez-vous vérifiées sur le terrain ? Avec quelles preuves ?"),
-        Q("5 Pourquoi", "5 Pourquoi : jusqu'à quelle cause racine descendez-vous (une cause sur laquelle on "
-          "peut agir) ?"),
         Q("Liens entre causes", "Y a-t-il des liens entre les causes (arbre des causes) ?"),
     ],
     ("a3", "5"): [
@@ -629,7 +628,9 @@ QUESTIONS = {
         Q("Sujet", "Quel problème ou écart voulez-vous corriger ? Est-ce le bon sujet pour le client, pour "
           "l'opérateur ?"),
         Q("Situation et objectif", "Quelle est la situation actuelle (chiffrée) et l'objectif visé ?"),
-        Q("Hypothèses de causes", "Quelles causes hypothétiques (Ishikawa, 5 Pourquoi) ?"),
+        Q("Analyse des causes (6M, FTA, 5 Pourquoi)",
+          "Analyse en trois temps : Ishikawa 6M, FTA de chaque cause, 5 Pourquoi en arbre sur les causes prouvées "
+          "(« /sanscauses » pour passer cette analyse)."),
         Q("Confirmation terrain", "Lesquelles avez-vous confirmées directement sur le terrain (gemba) ?"),
         Q("Contre-mesure", "Quelle contre-mesure envisagez-vous, avec quelles équipes ?"),
         Q("Impacts", "Quel impact anticipez-vous sur les autres équipes et sur le client ?"),
@@ -663,6 +664,9 @@ QUESTIONS = {
         Q("Schéma ou photo", "Avez-vous un schéma, un diagramme spaghetti ou une photo du poste ? "
           "(vous pouvez envoyer la photo, puis décrire ce qu'elle montre)"),
         Q("Opportunité", "Y a-t-il bien une opportunité d'amélioration ? Laquelle ?"),
+        Q("Analyse des causes (6M, FTA, 5 Pourquoi)",
+          "Analyse en trois temps : Ishikawa 6M, FTA de chaque cause, 5 Pourquoi en arbre sur les causes prouvées "
+          "(« /sanscauses » pour passer cette analyse)."),
     ],
     ("k6pts", "K3"): [
         Q("Principes", "Quels PRINCIPES d'amélioration pourraient répondre au sujet ? "
@@ -738,7 +742,8 @@ AIDE_SECTIONS = [
         ("/passer     /retour", "Passe l'étape / Revient à l'étape précédente", ""),
         ("/reponse    /effacer", "Relit vos réponses de l'étape / Recommence l'étape", ""),
         ("/guide      /etat", "Rappelle l'attendu et la question / Résumé des étapes", ""),
-        ("/oui  /non  /fin", "D5 : réponse FTA / fin d'un facteur ou des pourquoi", ""),
+        ("/oui  /non  /fin", "Analyse des causes : réponse FTA / fin d'un facteur ou d'une branche", ""),
+        ("/sanscauses", "A3, PDCA, Kaizen : passe l'analyse des causes", ""),
     ]),
     ("MODE DU COACH", [
         ("/mode guide", "Questions une par une, relance de l'IA si besoin (par défaut)", ""),
@@ -850,6 +855,7 @@ BTN_RCA_ISH = [[("➡️ Facteur suivant", "/sauter"), ("↩️ Annuler la derni
 BTN_RCA_FTA = [[("✅ Oui", "/oui"), ("❌ Non", "/non")],
                [("⏭️ Cause non évaluée", "/sauter"), ("↩️ Annuler", "/prec")]]
 BTN_RCA_PQ = [[("🏁 Cause racine atteinte", "/fin"), ("↩️ Annuler", "/prec")]]
+BTN_RCA_PQ_SIB = [[("➡️ Aucune autre réponse", "/fin"), ("↩️ Annuler", "/prec")]]
 BTN_FIN = [[("📄 Rapport complet", "/rapport complet"), ("📂 Projets", "/projets")],
            [("↩️ Ré-ouvrir la dernière étape", "/retour")]]
 
@@ -1081,7 +1087,8 @@ LIB_FIL = {"u": "🧑 Vous", "c": "🧭 Coach", "q": "🧑 Vous (question)", "a"
 # D5 : Ishikawa 6M (occurrence puis non-détection) → FTA → 5 Pourquoi
 # L'état se déduit d'un journal d'événements (self.rca["ev"]) : annuler = retirer le dernier.
 #   ["c", texte] cause · ["m"] fin du facteur · ["f", "oui"|"non", note] réponse FTA ·
-#   ["fs"] cause non évaluée · ["p", texte] un pourquoi · ["pe"] cause racine atteinte
+#   ["fs"] cause non évaluée · ["p", texte] une réponse de l'arbre des pourquoi · ["pf"] fin de branche ·
+#   ["pn"] plus d'autre réponse · ["x"] analyse passée · ["pe"] (ancien) cause racine atteinte
 # ----------------------------------------------------------------------------
 SIX_M = [("Machine", "équipements, outils, logiciels, moyens de production"),
          ("Matière", "matières, composants, produits ou informations reçus"),
@@ -1098,17 +1105,31 @@ FTA_QUESTIONS = [
     ("Standard appliqué", "Ce standard est-il appliqué sur le terrain, par tous et en permanence ?"),
     ("Standard robuste", "Ce standard est-il robuste : clair, à l'épreuve des erreurs et des variations, "
                          "sans dépendre d'une personne ?")]
-POURQUOI_MIN = 5
+# méthodes qui embarquent l'analyse des causes : (étape, n° de la question, nombre de dimensions)
+# 8D : occurrence puis non-détection ; A3, PDCA, Kaizen : occurrence seule
+RCA_ETAPES = {"8d": ("D5", 0, 2), "a3": ("4", 0, 1), "pdca": ("P", 2, 1), "k6pts": ("K2", 4, 1)}
 FIN_SAISIE = {"-", "ok", "fin", "non", "rien", "aucune", "aucun", "fini", "terminé", "termine", "suivant"}
 RE_OUINON = re.compile(r"^\s*(oui|o|yes|y|non|n|no)\b[\s,.:;!\-]*(.*)$", re.I | re.S)
 
-def rca_calcul(ev):
+def rca_cle(p):
+    return ".".join(str(i) for i in p)
+
+def rca_enfants(T, p):
+    """Réponses directes (chemins) sous le chemin p, dans l'ordre de saisie."""
+    return sorted(q for q in T["n"] if len(q) == len(p) + 1 and q[:len(p)] == p)
+
+def rca_arbre_txt(T):
+    """Arbre indenté d'une cause ; 🎯 marque les fins de branche (causes racines)."""
+    return "\n".join(f"{'    ' * (len(q) - 1)}{rca_cle(q)}  {T['n'][q]}" + ("  🎯" if q in T["f"] else "")
+                     for q in sorted(T["n"]))
+
+def rca_calcul(ev, ndim=2):
     """Rejoue le journal : phase (ish, fta, pq, fin), position courante, causes, verdicts, pourquoi."""
     S = {"ph": "ish", "dim": 0, "m": 0, "causes": [], "fta": {}, "fi": 0, "fq": 0,
-         "prouvees": [], "pi": 0, "why": {}, "racine": {}}
+         "prouvees": [], "pi": 0, "arbre": {}, "cur": (), "mode": "why"}
 
     def suite():
-        if S["ph"] == "ish" and S["dim"] >= 2:
+        if S["ph"] == "ish" and S["dim"] >= ndim:
             S["ph"] = "fta"
         if S["ph"] == "fta" and S["fi"] >= len(S["causes"]):
             S["prouvees"] = [c["id"] for c in S["causes"] if S["fta"].get(c["id"], {}).get("v") == "prouvee"]
@@ -1118,6 +1139,9 @@ def rca_calcul(ev):
     suite()
     for e in ev:
         k = e[0]
+        if k == "x":                           # analyse passée (A3, PDCA, Kaizen)
+            S["ph"] = "fin"
+            continue
         if S["ph"] == "ish":
             if k == "c":
                 n = 1 + sum(1 for c in S["causes"] if c["dim"] == S["dim"] and c["m"] == S["m"])
@@ -1142,11 +1166,25 @@ def rca_calcul(ev):
                 f["v"], S["fi"], S["fq"] = "non evaluee", S["fi"] + 1, 0
         elif S["ph"] == "pq":
             cid = S["prouvees"][S["pi"]]
-            if k == "p":
-                S["why"].setdefault(cid, []).append(e[1])
-            elif k == "pe":
-                S["racine"][cid] = True
+            T = S["arbre"].setdefault(cid, {"n": {}, "f": []})
+            cur, mode = S["cur"], S["mode"]
+            if k == "p":                       # une réponse : enfant du curseur, ou frère si « autre réponse »
+                parent = cur if mode == "why" else cur[:-1]
+                nouv = parent + (1 + len(rca_enfants(T, parent)),)
+                T["n"][nouv] = e[1]
+                S["cur"], S["mode"] = nouv, "why"
+            elif k == "pf" and cur and mode == "why":      # fin de branche : le curseur est une cause racine
+                T["f"].append(cur)
+                S["mode"] = "sib"
+            elif k == "pn" and cur and mode == "sib":      # plus d'autre réponse : on remonte d'un niveau
+                S["cur"] = cur[:-1]
+                if not S["cur"]:
+                    S["pi"] += 1
+                    S["cur"], S["mode"] = (), "why"
+            elif k == "pe" and cur:                        # ancien journal : fin de la chaîne linéaire
+                T["f"].append(cur)
                 S["pi"] += 1
+                S["cur"], S["mode"] = (), "why"
         suite()
     return S
 
@@ -1161,24 +1199,23 @@ def rca_diagramme(S, dim):
         lignes += [f"    {c['id']}  {c['t']}" for c in cs] or ["    (aucune cause)"]
     return "\n".join(lignes)
 
-def rca_resume(S):
+def rca_resume(S, ndim=2):
     """Texte de la réponse D5 : causes racines d'abord (le contexte transmis à D6 est tronqué par la fin)."""
     L = []
     prouvees = [c for c in S["causes"] if S["fta"].get(c["id"], {}).get("v") == "prouvee"]
     if S["ph"] != "fin":
         L.append("(analyse en cours)")
-    if any(S["why"].values()):
-        L.append("CAUSES RACINES (5 Pourquoi)")
-        for c in prouvees:
-            w = S["why"].get(c["id"])
-            if w:
-                L.append(f"- {rca_lib(c)} : « {c['t']} » → "
-                         f"{'cause racine' if S['racine'].get(c['id']) else 'en cours'} : {w[-1]}")
-        L += ["", "CHAÎNES DE POURQUOI"]
-        for c in prouvees:
-            w = S["why"].get(c["id"])
-            if w:
-                L.append(f"- {c['id']} : " + " → ".join(f"({i}) {x}" for i, x in enumerate(w, 1)))
+    arbres = [(c, S["arbre"][c["id"]]) for c in prouvees if S["arbre"].get(c["id"], {}).get("n")]
+    if arbres:
+        L.append("Causes Racines (fin de chaque branche des 5 Pourquoi)")
+        for c, T in arbres:
+            if T["f"]:
+                L += [f"- {c['id']} › {rca_cle(q)} : {T['n'][q]}" for q in sorted(T["f"])]
+            else:
+                L.append(f"- {c['id']} : analyse en cours")
+        L += ["", "ARBRES DES POURQUOI (🎯 = cause racine)"]
+        for c, T in arbres:
+            L += [f"{rca_lib(c)} : « {c['t']} »", rca_arbre_txt(T)]
     if prouvees:
         L += ["", "CAUSES PROUVÉES (FTA : au moins un « non »)"]
         for c in prouvees:
@@ -1192,7 +1229,7 @@ def rca_resume(S):
         L += ["", "CAUSES ÉCARTÉES (standard existant, appliqué et robuste) : " + ", ".join(ecartees)]
     if non_eval:
         L += ["", "CAUSES NON ÉVALUÉES : " + ", ".join(non_eval)]
-    for dim in (0, 1):
+    for dim in range(ndim):
         cs = [c for c in S["causes"] if c["dim"] == dim]
         if cs or S["dim"] > dim or S["ph"] != "ish":
             L += ["", f"ISHIKAWA {DIMENSIONS[dim][1]}"]
@@ -1405,10 +1442,17 @@ class Session:
                   f"🎯 Attendu : {e['attendu']}"]
         if self.rca_step():
             lignes.append(f"🛠 Outils : {e['outils']}")
-            lignes.append("👉 Trois temps : (1) Ishikawa 6M, une cause à la fois, d'abord pour l'occurrence puis "
-                          "pour la non-détection ; (2) FTA : pour chaque cause, un standard existe-t-il, "
-                          "est-il appliqué, est-il robuste ? ; (3) 5 Pourquoi sur les causes prouvées "
-                          "(au moins un « non » au FTA). /prec annule la dernière saisie.")
+            ndim = self.rca_cfg()[2]
+            lignes.append("👉 Trois temps : (1) Ishikawa 6M, une cause à la fois"
+                          + (", d'abord pour l'occurrence puis pour la non-détection" if ndim == 2 else "")
+                          + " ; (2) FTA : pour chaque cause, un standard existe-t-il, "
+                          "est-il appliqué, est-il robuste ? ; (3) 5 Pourquoi en arbre sur les causes prouvées "
+                          "(au moins un « non » au FTA). /prec annule la dernière saisie."
+                          + (" /sanscauses passe cette analyse." if ndim == 1 else ""))
+            reste = len(self.questions()) - 1
+            if reste:
+                lignes.append(f"Puis {reste} question{'s' if reste > 1 else ''} complémentaire"
+                              f"{'s' if reste > 1 else ''} sur l'étape.")
         elif self.guide_actif():
             n = len(self.questions())
             lignes.append(f"🛠 Outils : {e['outils']}")
@@ -1701,14 +1745,17 @@ class Session:
         return [self.question_msg()]
 
     # -- D5 : Ishikawa 6M → FTA → 5 Pourquoi -----------------------------------------
+    def rca_cfg(self):
+        return RCA_ETAPES.get(self.methode) or ("", 0, 2)
+
     def rca_step(self):
-        return self.methode == "8d" and self.code == "D5" and self.guide_actif() and not self.fini
+        return self.code == self.rca_cfg()[0] and self.guide_actif() and not self.fini
 
     def rca_actif(self):
-        return self.rca_step() and self.qetat()["i"] == 0
+        return self.rca_step() and self.qetat()["i"] == self.rca_cfg()[1]
 
     def rca_etat(self):
-        return rca_calcul(self.rca["ev"])
+        return rca_calcul(self.rca["ev"], self.rca_cfg()[2])
 
     def rca_prompt(self, S=None, complet=True):
         """Question suivante de l'analyse. complet=False (enchaînement) : en FTA, la cause et la consigne
@@ -1724,7 +1771,10 @@ class Session:
                          f"(n° {cid}), ou « - » s'il n'y en a aucune.")
             else:
                 corps = f"Une autre cause {nom} ({cid}) ? Écrivez-la, ou « - » s'il n'y en a plus."
-            return msg(f"{tete}\n{corps}", BTN_RCA_ISH)
+            btn = BTN_RCA_ISH
+            if self.rca_cfg()[2] == 1 and not S["causes"] and S["m"] == 0:
+                btn = BTN_RCA_ISH + [[("⏭️ Passer l'analyse des causes", "/sanscauses")]]
+            return msg(f"{tete}\n{corps}", btn)
         if S["ph"] == "fta":
             c = S["causes"][S["fi"]]
             lib, q = FTA_QUESTIONS[S["fq"]]
@@ -1736,24 +1786,40 @@ class Session:
         if S["ph"] == "pq":
             cid = S["prouvees"][S["pi"]]
             c = next(x for x in S["causes"] if x["id"] == cid)
-            w = S["why"].get(cid, [])
-            n = len(w) + 1
+            T = S["arbre"].get(cid, {"n": {}, "f": []})
+            cur, mode = S["cur"], S["mode"]
+            parent = cur if mode == "why" else cur[:-1]
+            nid = parent + (1 + len(rca_enfants(T, parent)),)
+            sujet = f"« {coupe(T['n'][parent], 140)} »" if parent else "cette cause"
             tete = (f"❓ 5 Pourquoi — cause prouvée {rca_lib(c)} : « {c['t']} » "
                     f"({S['pi'] + 1}/{len(S['prouvees'])})")
-            if n == 1:
-                corps = "Pourquoi 1 : pourquoi cette cause est-elle présente ?"
+            intro = ""
+            if (not T["n"]) or complet:
+                intro = ("Arbre : une réponse peut avoir plusieurs causes. Chaque réponse est numérotée "
+                         "(1, 1.1, 1.2, 2…). Je vous demande « pourquoi ? » jusqu'à la fin de la branche, puis "
+                         "une autre réponse au même niveau. Les fins de branche (🎯) sont donc des causes racines : arrêtez-vous "
+                         "dès qu'on peut agir sur la cause (parfois 3 pourquoi peuvent suffire, 5 n'est qu'un repère, "
+                         "... 7, 8 ou plus sont parfois nécessaires).")
+                if T["n"]:
+                    intro += "\nArbre actuel :\n" + rca_arbre_txt(T)
+            if mode == "sib":
+                corps = (f"🌿 Une autre réponse (n° {rca_cle(nid)}) à {sujet} ? "
+                         "Écrivez-la, ou « - » s'il n'y en a plus.")
+                btn = BTN_RCA_PQ_SIB
             else:
-                corps = f"Pourquoi {n} : pourquoi « {coupe(w[-1], 140)} » ?"
-                if n > POURQUOI_MIN:
-                    corps += ("\nContinuez tant que vous n'avez pas atteint la cause racine ; "
-                              "« - » (ou /fin) quand la dernière réponse est la cause racine.")
-            return msg(f"{tete}\n{corps}", BTN_RCA_PQ)
+                pourquoi = "pourquoi cette cause est-elle présente ?" if not parent else f"pourquoi {sujet} ?"
+                corps = f"Pourquoi {len(nid)} (réponse {rca_cle(nid)}) — {pourquoi}"
+                if len(nid) >= 3:
+                    corps += "\n« - » (ou /fin) si la dernière réponse est une cause racine."
+                btn = BTN_RCA_PQ
+            haut = "\n".join(x for x in (tete if (intro or not T["n"]) else "", intro) if x)
+            return msg((haut + "\n" if haut else "") + corps, btn)
         return msg("🏁 Analyse des causes terminée. /ok pour valider l'étape, /prec pour corriger.",
                    BTN_FIN_QUESTIONS)
 
     def rca_sync(self, S):
         st = self.qetat()
-        st["r"]["0"] = rca_resume(S)
+        st["r"][str(self.rca_cfg()[1])] = rca_resume(S, self.rca_cfg()[2])
         self.synchroniser()
         self.save()
 
@@ -1775,6 +1841,12 @@ class Session:
                        f"{'s' if len(p) > 1 else ''} sur {len(B['causes'])}."
                        + ("\n" + "\n".join(f"• {rca_lib(c)} : {c['t']}" for c in p) if p else "")
                        + ("\nLes 5 Pourquoi suivent, cause par cause." if p else ""))
+        if A["ph"] == "pq" and (B["pi"] > A["pi"] or B["ph"] != "pq"):
+            cid = A["prouvees"][A["pi"]]
+            T = B["arbre"].get(cid, {"n": {}, "f": []})
+            out.append(f"🌳 Arbre des pourquoi — {cid} : {len(T['f'])} cause{'s' if len(T['f']) > 1 else ''} "
+                       f"racine{'s' if len(T['f']) > 1 else ''} (🎯), chacune fera l'objet d'une action "
+                       f"corrective / préventive.\n{rca_arbre_txt(T)}")
         self.rca_sync(B)
         if B["ph"] == "fin":
             out.append("🏁 Analyse des causes terminée.")
@@ -1800,26 +1872,26 @@ class Session:
             return self.rca_oui_non("oui" if m.group(1).lower() in ("oui", "o", "yes", "y") else "non",
                                     m.group(2).strip())
         if A["ph"] == "pq":
-            if t.lower().strip(" .!") in ("-", "fin", "terminé", "termine", "fini", "racine"):
+            mots = FIN_SAISIE if A["mode"] == "sib" else {"-", "fin", "terminé", "termine", "fini", "racine"}
+            if t.lower().strip(" .!") in mots:
                 return self.rca_commande("fin")
             cid = A["prouvees"][A["pi"]]
-            n = len(A["why"].get(cid, [])) + 1
             ev.append(["p", t])
-            self._pq_alerte = None
-            self.noter("u", f"[Pourquoi {n} · {cid}] {t}")
+            cle = rca_cle(self.rca_etat()["cur"])
+            self.noter("u", f"[Pourquoi {cle} · {cid}] {t}")
             return self.rca_suite(A)
         return [self.rca_prompt(A)]
 
     def rca_oui_non(self, rep, note=""):
         A = self.rca_etat()
         if A["ph"] != "fta":
-            return ["« /oui » et « /non » répondent aux questions du FTA (étape D5 du 8D)."]
+            return ["« /oui » et « /non » répondent aux questions du FTA (analyse des causes)."]
         c = A["causes"][A["fi"]]
         lib = FTA_QUESTIONS[A["fq"]][0]
         self.rca["ev"].append(["f", rep, note])
         self.noter("u", f"[FTA {c['id']} · {lib}] {rep}" + (f" — {note}" if note else ""))
         if rep == "non":
-            info = [f"🔴 {c['id']} : « {lib.lower()} » = non → cause PROUVÉE (5 Pourquoi à suivre)."]
+            info = [f"🔴 {c['id']} : « {lib.lower()} » = non → cause prouvée (5 Pourquoi à suivre)."]
         elif A["fq"] + 1 >= len(FTA_QUESTIONS):
             info = [f"🟢 {c['id']} : standard existant, appliqué et robuste → cause écartée."]
         else:
@@ -1844,35 +1916,41 @@ class Session:
             return self.rca_suite(A, [f"⏭️ {c['id']} laissée non évaluée."])
         if A["ph"] == "pq":
             cid = A["prouvees"][A["pi"]]
-            w = A["why"].get(cid, [])
-            if not w:
+            T = A["arbre"].get(cid, {"n": {}, "f": []})
+            cur = A["cur"]
+            if not cur:
                 return [msg("Écrivez au moins un pourquoi.", BTN_RCA_PQ)]
-            if len(w) < POURQUOI_MIN and getattr(self, "_pq_alerte", None) != cid:
-                self._pq_alerte = cid
-                return [msg(f"⚠️ {len(w)} pourquoi seulement ({POURQUOI_MIN} au minimum sont attendus). "
-                            "Êtes-vous bien à la cause racine ? Répétez « - » (ou /fin) pour confirmer, "
-                            "sinon continuez à répondre.", BTN_RCA_PQ)]
-            self._pq_alerte = None
-            ev.append(["pe"])
-            self.noter("s", f"Cause racine de {cid} : {w[-1]}")
-            return self.rca_suite(A, [f"🏁 Cause racine de {cid} : « {coupe(w[-1], 200)} »."])
+            if A["mode"] == "sib":                       # plus d'autre réponse : on remonte
+                ev.append(["pn"])
+                self.noter("s", f"Pas d'autre réponse au niveau {rca_cle(cur)}.")
+                return self.rca_suite(A)
+            ev.append(["pf"])
+            self.noter("s", f"Cause racine de {cid} › {rca_cle(cur)} : {T['n'][cur]}")
+            return self.rca_suite(A, [f"🎯 Cause racine {cid} › {rca_cle(cur)} : « {coupe(T['n'][cur], 200)} »."])
         return [self.rca_prompt(A)]
 
     def rca_prec(self):
         st = self.qetat()
-        if st["i"] >= 1:                                   # analyse terminée : on la ré-ouvre
-            st["i"] = 0
+        qi = self.rca_cfg()[1]
+        if st["i"] > qi:                                   # analyse terminée : on la ré-ouvre
+            st["i"] = qi
         ev = self.rca["ev"]
+        if not ev and qi > 0:                              # rien à annuler : question précédente
+            st["i"] = qi - 1
+            st["rel"] = None
+            self.save()
+            return [self.question_msg()]
         if not ev:
             self.save()
             return [msg("Rien à annuler : l'analyse n'a pas encore commencé.", self.rca_prompt()["boutons"])]
         derniere = ev.pop()
-        self._pq_alerte = None
         self.noter("s", "Dernière saisie annulée.")
         B = self.rca_etat()
         self.rca_sync(B)
         quoi = {"c": "la dernière cause", "m": "la fin du facteur", "f": "la dernière réponse FTA",
-                "fs": "le saut de la cause", "p": "le dernier pourquoi", "pe": "la fin des pourquoi"}[derniere[0]]
+                "fs": "le saut de la cause", "p": "le dernier pourquoi", "pe": "la fin des pourquoi",
+                "pf": "la fin de branche", "pn": "« aucune autre réponse »",
+                "x": "le passage de l'analyse"}[derniere[0]]
         return [f"↩️ Annulé : {quoi}.", self.rca_prompt(B)]
 
     def coach_question(self, question):
@@ -2371,12 +2449,19 @@ class Session:
                 return self.reouvrir_etape("↩️ Démarche rouverte.")
             return [msg("Démarche terminée. /rapport complet, /retour pour ré-ouvrir la dernière étape, "
                         "ou une nouvelle démarche.", BTN_FIN)], None
+        if nom == "sanscauses":
+            if not (self.rca_actif() and self.rca_cfg()[2] == 1):
+                return ["« /sanscauses » passe l'analyse des causes (A3, PDCA, Kaizen), quand elle est en cours."], None
+            A = self.rca_etat()
+            self.rca["ev"].append(["x"])
+            self.noter("s", "Analyse des causes passée.")
+            return self.rca_suite(A), None
         if nom in ("sauter", "fin") and self.rca_actif():
             return self.rca_commande(nom), None
         if nom in ("oui", "non") and self.rca_actif():
             return self.rca_oui_non(nom), None
         if nom in ("oui", "non", "fin"):
-            return ["Cette commande ne sert que pendant l'analyse des causes (étape D5 du 8D)."], None
+            return ["Cette commande ne sert que pendant l'analyse des causes (analyse des causes)."], None
         if nom == "ok":
             return self.valider(force=arg.strip().lower() in ("force", "!"))
         if nom == "sauter":
@@ -2389,7 +2474,7 @@ class Session:
         if nom == "prec":
             if not self.guide_actif():
                 return ["« /prec » concerne le mode guidé (/mode guide)."], None
-            if self.rca_step():
+            if self.rca_step() and self.qetat()["i"] >= self.rca_cfg()[1]:
                 return self.rca_prec(), None
             st = self.qetat()
             if st["i"] <= 0:
@@ -2401,7 +2486,7 @@ class Session:
         if nom == "effacer":
             self.brouillon = ""
             self.qr[self.code] = {"i": 0, "r": {}, "rel": None}
-            if self.methode == "8d" and self.code == "D5":
+            if self.rca_step():
                 self.rca = {"ev": []}
             self.noter("s", "Réponses de l'étape effacées.")
             self.save()
@@ -2678,7 +2763,7 @@ def boucle_cli():
             if s.methode:
                 s.save()
                 print(rendre_cli(f"💾 Projet « {s.titre} » enregistré — /projets pour le ré-ouvrir."))
-            print(rendre_cli("À bientôt."))
+            print(rendre_cli("\nÀ bientôt."))
             break
         attente = bool(texte.strip()) and not texte.lstrip().startswith("/") and s.methode
         if attente:                                           # appel IA possible : on le signale
