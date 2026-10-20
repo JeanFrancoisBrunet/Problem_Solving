@@ -57,12 +57,14 @@ Chaque méthode porte une consigne pour le coach. Exemple pour le **K6pts** (d'a
 ### Mode guidé (par défaut) : une question à la fois
 
 1. L'utilisateur lance une méthode : `/8d Retours clients lot 42`
-2. Le coach présente l'étape (question centrale, attendu, outils), puis pose **les questions de l'étape une par une**. Exemple en 8D / D1 : identification, écart attendu / réel, puis **QQOQCCP déroulé** (Quoi, Qui, Où, Quand, Comment, Combien, Pourquoi), Est / N'est pas, risque, enjeu — 12 questions. Les étapes comptent de 3 à 6 questions (39 en 8D, 29 en A3, 17 en PDCA, 21 en K6pts) ; l'étape **D5 du 8D** suit un déroulé spécifique (voir ci-dessous).
+2. Le coach présente l'étape (question centrale, attendu, outils), puis pose **les questions de l'étape une par une**. Exemple en 8D / D1 : identification, écart attendu / réel, puis **QQOQCCP déroulé** (Quoi, Qui, Où, Quand, Comment, Combien, Pourquoi), risque, enjeu — 18 questions. Le **QQOQCCP est le même outil en 8D (D1), en A3 (étape 1) et en Kaizen 6 points (K1)**, avec la même structure : le 8D parle de défaut (produit ou processus), l'A3 et le Kaizen d'un défaut **ou** d'une problématique au sens large. Pour **chaque** question du QQOQCCP, le coach demande d'abord l'**Est** (la réponse), puis le **N'est pas** (ce qui pourrait être concerné mais ne l'est pas, pour préciser la réponse) ; le N'est pas peut rester vide (`-`) et n'est jamais relancé par l'IA. Les étapes comptent de 1 à 18 questions (45 en 8D, 42 en A3, 17 en PDCA, 33 en K6pts) ; l'étape **D5 du 8D** suit un déroulé spécifique (voir ci-dessous).
 3. Après chaque réponse floue, le coach pose **au plus une relance** ; la réponse à la relance s'ajoute à la précédente et on passe à la question suivante : **le dialogue ne boucle pas**.
 4. Après la dernière question : revue brève de l'étape par rapport à l'attendu (verdict *suffisant* / *à compléter*). L'utilisateur peut ajouter un complément libre, puis tape `/ok`.
 5. À la dernière étape : **revue de cohérence** par le LLM et **rapport Markdown**.
 
 Les questions sont volontairement **générales**, sans exemple propre à un métier : le programme reste compréhensible par des personnes de tous secteurs, et le coach IA a pour consigne de ne pas donner d'exemples concrets.
+
+**Reprise automatique** : après une interruption (programme ou bot relancé, projet rechargé avec `/charger`), le coach rappelle l'étape et **repose la question en attente** (y compris une relance de l'IA restée sans réponse) : il n'y a rien à taper. Si l'IA est indisponible, votre réponse est conservée et on passe à la question suivante sans relance. `ok`, `valider`, `suivant`… ne sont **jamais enregistrés comme réponse** : ils réaffichent la question en cours (ou passent à la suivante si elle est déjà répondue) ; `oui` et `non` restent des réponses.
 
 Pendant les questions : `-` (ou `/sauter`) laisse une question sans réponse, `/prec` revient en arrière, une phrase avec « ? » interroge le coach sans perdre la question en cours, `oui` / `non` restent de simples réponses.
 
@@ -90,6 +92,7 @@ Le mode est mémorisé ; passer de `libre` à `guide` conserve le texte déjà s
 
 - **Tout est enregistré après chaque message** : réponses, retours du coach, questions, analyses de photos (`sessions/<id>/<projet>.json`). Un redémarrage ne fait rien perdre, et le projet en cours est repris.
 - Plusieurs projets par utilisateur : `/projets` (boutons) puis `/charger <n>` rouvre un projet **avec son historique** et la question en cours ; lancer une nouvelle démarche **conserve** l'ancienne.
+- **Les projets vides ne s'accumulent pas** : un projet sans aucune saisie (ni réponse, ni échange, ni photo, ni titre) est supprimé automatiquement au lancement d'une nouvelle démarche, avec `/stop`, et au démarrage du programme ou du bot (le projet ouvert est toujours gardé). Les projets qui contiennent du travail ne sont jamais supprimés automatiquement : `/supprimer <n>`.
 - `/titre` s'utilise **à tout moment** (`/titre texte`, ou `/titre` puis le titre au message suivant). Un titre est proposé après la première étape (bouton *Adopter*).
 - `/historique [étape|tout]` relit les échanges ; `/rapport complet` les ajoute en annexe du rapport.
 

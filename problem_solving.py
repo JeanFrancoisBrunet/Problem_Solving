@@ -169,8 +169,9 @@ METHODES = {
               ["Titre reconnaissable, référence article (avec indice), n° de lot, quantité concernée, "
                "date et/ou n° de litige",
                "Écart attendu / réel, quantifié",
-               "QQOQCCP : quoi, qui, où, quand, comment, combien, pourquoi (faits, pas d'opinions)",
-               "Est / n'est pas (conforme / non conforme) : qu'est-ce qui change ?",
+               "QQOQCCP : quoi, qui, où, quand, comment, combien, pourquoi (faits, pas d'opinions), avec "
+               "pour chaque question un « Est » (la réponse) et un « N'est pas » (ce qui est exclu, pour "
+               "préciser la réponse ; parfois sans objet)",
                "Risque : problème récurrent ? autres produits ou processus touchés ?",
                "Enjeu : risque client, coût, logistique"],
               "QQOQCCP, Est / N'est pas, 7 outils de la Qualité (relevés, Pareto, Ishikawa, SPC…)"),
@@ -261,7 +262,8 @@ METHODES = {
               "chacun comprend de la même façon.",
               ["Pourquoi ce sujet, et pourquoi maintenant ?",
                "Quel enjeu pour le client, la sécurité, la qualité, les coûts, les délais ?",
-               "QQOQCCP : le sujet est-il posé sans formulation vague ?",
+               "QQOQCCP : le sujet est-il posé sans formulation vague ? (quoi, qui, où, quand, comment, combien, "
+               "pourquoi, chacun avec son « Est » et son « N'est pas »)",
                "Quels indicateurs (KPI) en lien avec la stratégie ?"],
               "QQOQCCP, indicateurs (KPI)"),
             E("2", "Comprendre la situation actuelle", "Où en est-on vraiment ?",
@@ -378,9 +380,8 @@ METHODES = {
               "Un accord de l'équipe sur le problème à résoudre, avant que chacun n'arrive avec sa "
               "solution.",
               ["Sommes-nous d'accord sur le problème à résoudre ?",
-               "Observation collective au poste (gemba) : quand apparaît la difficulté, où, combien "
-               "de fois, dans quelles conditions ?",
-               "Pourquoi elle gêne le travail",
+               "Observation collective au poste (gemba) : QQOQCCP (quoi, qui, où, quand, comment, combien, "
+               "pourquoi), chacun avec son « Est » et son « N'est pas »",
                "(Évitez d'arriver avec une solution.)"],
               "Observation collective au poste (gemba), QQOQCCP"),
             E("K2", "Analyser factuellement la situation actuelle", "Que se passe-t-il vraiment ?",
@@ -433,6 +434,70 @@ ALIAS_METHODES = {"k6": "k6pts", "kaizen": "k6pts", "k6points": "k6pts"}
 def Q(libelle, question, exemple=""):
     return (libelle, question, exemple)
 
+# QQOQCCP avec « Est / N'est pas » : un seul outil, la même structure dans les trois démarches.
+# Pour chaque question : l'Est (la réponse), puis le N'est pas (ce qui est exclu, pour préciser la problématique; parfois vide).
+# QQOQCCP : version « défaut » (produit ou processus), pour le 8D (D1).
+# QQOQCCP_GENERAL : même structure, vocabulaire plus large (défaut OU problématique), pour l'A3 et le Kaizen.
+QQOQCCP = [
+    Q("QUOI (Est)", "Quel est précisément le défaut ou le dysfonctionnement ? Qu'est-ce qui est "
+      "touché (produit, pièce, machine, processus) ?"),
+    Q("QUOI (N'est pas)", "Qu'est-ce qui pourrait être touché mais ne l'est pas "
+      "(autres défauts, autres produits ou éléments, ce qui est conforme) ? « - » s'il n'y a rien à exclure."),
+    Q("QUI (Est)", "Qui a détecté le problème ? Qui est concerné (poste, équipe, client) ?"),
+    Q("QUI (N'est pas)", "Qui pourrait être concerné mais ne l'est pas (autres postes, "
+      "équipes, clients) ? « - » s'il n'y a rien à exclure."),
+    Q("OÙ (Est)", "À quel endroit apparaît-il (site, ligne, machine, poste), et où est-il détecté ? "
+      "Où est-il visible sur la pièce ?"),
+    Q("OÙ (N'est pas)", "Où pourrait-il apparaître mais n'apparaît pas (autres sites, "
+      "lignes, machines, postes, autres zones de la pièce) ? « - » s'il n'y a rien à exclure."),
+    Q("QUAND (Est)", "Quand est-il apparu la première fois, depuis quand, à quelle fréquence ? "
+      "Un moment particulier (équipe, changement de lot, démarrage) ?"),
+    Q("QUAND (N'est pas)", "Quand n'apparaît-il pas (périodes, équipes, lots ou "
+      "moments sans le problème) ? « - » s'il n'y a rien à exclure."),
+    Q("COMMENT (Est)", "Comment se manifeste-t-il, et comment a-t-il été détecté "
+      "(contrôle, mesure, réclamation) ?"),
+    Q("COMMENT (N'est pas)", "Comment ne se manifeste-t-il pas (autres formes du "
+      "problème non observées, autres moyens de détection sans effet) ? « - » s'il n'y a rien à exclure."),
+    Q("COMBIEN (Est)", "Quelle quantité, quel taux, quel coût ? (nombre de pièces, %, lots "
+      "concernés)"),
+    Q("COMBIEN (N'est pas)", "Quelle quantité ou quels lots ne sont pas concernés, "
+      "alors qu'ils auraient pu l'être ? « - » s'il n'y a rien à exclure."),
+    Q("POURQUOI (Est)", "Pourquoi est-ce un problème ? Quelle exigence n'est pas respectée, "
+      "quelles conséquences ? (Il ne s'agit pas encore des causes.)"),
+    Q("POURQUOI (N'est pas)", "Quelles exigences restent respectées, quelles "
+      "conséquences ne sont pas en jeu ? « - » si cela n'apporte rien."),
+]
+
+QQOQCCP_GENERAL = [
+    Q("QUOI (Est)", "Quel est précisément le sujet : le défaut ou l'écart constaté (produit ou "
+      "processus), ou plus largement la problématique à traiter ? Qu'est-ce qui est touché ?"),
+    Q("QUOI (N'est pas)", "Qu'est-ce qui pourrait être concerné mais ne l'est pas (autres "
+      "aspects, autres produits ou processus, ce qui fonctionne bien) ? « - » s'il n'y a rien à exclure."),
+    Q("QUI (Est)", "Qui est concerné (postes, équipes, clients, fournisseurs) ? Qui a constaté la "
+      "situation ?"),
+    Q("QUI (N'est pas)", "Qui pourrait être concerné mais ne l'est pas (autres postes, "
+      "équipes, clients) ? « - » s'il n'y a rien à exclure."),
+    Q("OÙ (Est)", "À quel endroit la situation apparaît-elle (site, ligne, poste, service, étape du "
+      "processus), et où est-elle constatée ?"),
+    Q("OÙ (N'est pas)", "Où pourrait-elle apparaître mais n'apparaît pas (autres sites, "
+      "services, postes, étapes) ? « - » s'il n'y a rien à exclure."),
+    Q("QUAND (Est)", "Depuis quand, à quelle fréquence, à quel moment (équipe, période, changement, "
+      "démarrage) ?"),
+    Q("QUAND (N'est pas)", "Quand ne se produit-elle pas (périodes, équipes ou moments "
+      "sans le problème) ? « - » s'il n'y a rien à exclure."),
+    Q("COMMENT (Est)", "Comment la situation se manifeste-t-elle, dans quelles conditions, et "
+      "comment a-t-elle été constatée (observation, mesure, réclamation, retour d'expérience) ?"),
+    Q("COMMENT (N'est pas)", "Comment ne se manifeste-t-elle pas (autres formes ou "
+      "conditions non observées) ? « - » s'il n'y a rien à exclure."),
+    Q("COMBIEN (Est)", "Quelle ampleur : quantité, fréquence, taux, durée, coût ?"),
+    Q("COMBIEN (N'est pas)", "Quelle part ou quelles quantités ne sont pas concernées, "
+      "alors qu'elles auraient pu l'être ? « - » s'il n'y a rien à exclure."),
+    Q("POURQUOI (Est)", "Pourquoi est-ce un sujet à traiter ? Quelle exigence ou quel objectif "
+      "n'est pas atteint, quels enjeux ou conséquences ? (Il ne s'agit pas encore des causes.)"),
+    Q("POURQUOI (N'est pas)", "Quelles exigences ou quels objectifs sont respectés, "
+      "quelles conséquences ne sont pas en jeu ? « - » si cela n'apporte rien."),
+]
+
 QUESTIONS = {
     ("8d", "D1"): [
         Q("Identification", "Donnez un titre à la problèmatique, avec la référence du produit ou du "
@@ -440,20 +505,7 @@ QUESTIONS = {
           "de litige ou de réclamation s'il existe."),
         Q("Écart attendu / réel", "Quel était l'attendu (standard, plan, cahier des charges, norme, attente "
           "client) et que constate-t-on en réalité ? Quel est l'écart ?"),
-        Q("QUOI", "QUOI — Quel est précisément le défaut ou le dysfonctionnement ? Qu'est-ce qui est touché "
-          "(produit, pièce, machine, processus) ?"),
-        Q("QUI", "QUI — Qui a détecté le problème ? Qui est concerné (poste, équipe, client) ?"),
-        Q("OÙ", "OÙ — À quel endroit apparaît-il (site, ligne, machine, poste), et où est-il détecté ? "
-          "Où est-il visible sur la pièce ?"),
-        Q("QUAND", "QUAND — Quand est-il apparu la première fois, depuis quand, à quelle fréquence ? "
-          "Un moment particulier (équipe, changement de lot, démarrage) ?"),
-        Q("COMMENT", "COMMENT — Comment se manifeste-t-il, et comment a-t-il été détecté "
-          "(contrôle, mesure, réclamation) ?"),
-        Q("COMBIEN", "COMBIEN — Quelle quantité, quel taux, quel coût ? (nombre de pièces, %, lots concernés)"),
-        Q("POURQUOI", "POURQUOI — Pourquoi est-ce un problème ? Quelle exigence n'est pas respectée, "
-          "quelles conséquences ? (Il ne s'agit pas encore des causes.)"),
-        Q("Est / N'est pas", "Qu'est-ce qui est conforme, et qu'est-ce qui change entre ce qui fonctionne et "
-          "ce qui ne fonctionne pas (produit, machine, équipe, moment, ...) ?"),
+        *QQOQCCP,
         Q("Risque", "Le problème est-il récurrent ? D'autres produits, lignes ou processus peuvent-ils être "
           "touchés ?"),
         Q("Enjeu", "Quel est l'enjeu : risque client, coût, logistique (livraison, délai) ?"),
@@ -525,7 +577,7 @@ QUESTIONS = {
     ("a3", "1"): [
         Q("Pourquoi ce sujet", "Pourquoi ce sujet, et pourquoi maintenant ?"),
         Q("Enjeux", "Quel est l'enjeu pour le client, la sécurité, la qualité, les coûts, les délais ?"),
-        Q("QQOQCCP", "Posez le sujet sans formulation vague : quoi, où, quand, combien ?"),
+        *QQOQCCP_GENERAL,
         Q("Indicateurs", "Quels indicateurs (KPI) mesurent ce sujet, et à quel objectif de l'entreprise "
           "sont-ils liés ?"),
     ],
@@ -603,9 +655,7 @@ QUESTIONS = {
 
     ("k6pts", "K1"): [
         Q("Problème partagé", "Sommes-nous d'accord sur le problème à résoudre ? Formulez-le SANS solution."),
-        Q("Observation au poste", "Qu'a observé l'équipe au poste : quand apparaît la difficulté, où, combien de "
-          "fois, dans quelles conditions ?"),
-        Q("Pourquoi ça gêne", "Pourquoi cette difficulté gêne-t-elle le travail ?"),
+        *QQOQCCP_GENERAL,
     ],
     ("k6pts", "K2"): [
         Q("Faits relevés", "Quels faits avez-vous relevés (observation directe, mesures, temps) ?"),
@@ -648,6 +698,7 @@ for _m in METHODES.values():                       # étape sans questions écri
         _e.setdefault("questions", [Q(p.split(" :")[0][:40], p) for p in _e["points"]])
 
 OK_WORDS = {"ok", "oui", "valider", "valide", "c'est bon", "suivant", "next"}
+ACQUIT = OK_WORDS - {"oui"}           # « ok » & co. ne sont jamais une réponse à une question de l'étape
 QUITTER = ("q", "quit", "quitter", "exit")
 
 SYSTEM_PROMPT = (
@@ -722,7 +773,7 @@ AIDE_COURTE = [
     ("/q     ou  /quit", "Quitte (& enregistre le projet)"),
 ]
 AIDE_CONFIDENTIALITE = ("Confidentialité : avec Groq, les photos partent dans le cloud ; avec Ollama, elles "
-                        "restent sur le Pi5.\n                     Évitez visages et infos confidentiels.")
+                        "restent sur le Pi5.\n   Évitez visages et infos confidentiels.")
 
 def aide_texte():
     """Menu en liste (Telegram, ou terminal étroit) : sections puis « commande — rôle »."""
@@ -1166,6 +1217,28 @@ class Session:
         if self.prefs.get("actif"):
             if not self.ouvrir(self.prefs["actif"]):
                 self.prefs["actif"] = None
+        self.purger_vides()
+
+    # -- projets vides : rien à garder -------------------------------------------
+    @staticmethod
+    def projet_vide(d):
+        """Projet sans aucune saisie : ni réponse, ni échange, ni photo, ni cause D5."""
+        if not isinstance(d, dict):
+            return False
+        return not (d.get("titre") not in (None, "", "Sans titre") or d.get("reponses") or d.get("fil") or d.get("photos") or (d.get("brouillon") or "").strip()
+                    or (d.get("rca") or {}).get("ev")
+                    or any((st or {}).get("r") or (st or {}).get("c") for st in (d.get("qr") or {}).values()))
+
+    def purger_vides(self):
+        """Supprime les projets vides (un /8d lancé puis abandonné), sauf le projet ouvert."""
+        for f in self.dir.glob("*.json"):
+            if f.name.startswith("_") or f.stem == self.pid:
+                continue
+            if self.projet_vide(lire_json(f)):
+                try:
+                    f.unlink()
+                except OSError:
+                    pass
 
     # -- préférences (moteur, modèles) -----------------------------------------
     @staticmethod
@@ -1449,6 +1522,27 @@ class Session:
         sortie.append("\n/historique <étape> (ex. D3) ou /historique tout")
         return "\n".join(sortie)
 
+    def reprise_msgs(self):
+        """Reprise après une interruption (relance du programme ou du bot) : rappelle l'étape et pose
+        de nouveau la question en attente, sans rien avoir à taper."""
+        if not self.methode or self.fini:
+            return []
+        entete = f"▶️ On reprend à l'étape {self.idx + 1}/{len(self.etapes)} — {self.code} · {self.etape['titre']}"
+        if not self.guide_actif():
+            texte = f"{entete}\n\n{self.invite_texte()}"
+            if self.brouillon:
+                texte += f"\n\n🧾 Votre réponse en cours :\n{self.brouillon}"
+            return [msg(texte, BTN_ETAPE)]
+        st = self.qr.get(self.code) or {}
+        if not st.get("r") and not st.get("c"):             # étape à peine commencée
+            return [entete] + self.invite_msgs()
+        sortie = [entete]
+        if st.get("rel") is not None:                       # une relance de l'IA attendait une réponse
+            relances = [e for e in self.fil.get(self.code, []) if e["r"] == "c"]
+            if relances:
+                sortie.append("🔎 " + relances[-1]["t"])
+        return sortie + [self.question_msg()]
+
     def derniers_echanges(self, n=4):
         entrees = [e for e in self.fil.get(self.code, []) if e["r"] != "s"][-n:]
         if not entrees:
@@ -1570,13 +1664,14 @@ class Session:
             st["rel"] = None
         else:
             st["r"][str(i)] = t
-            if self.mode == "guide" and not RE_REPONSE_NEUTRE.fullmatch(t.strip()):
+            if self.mode == "guide" and "N'est pas" not in qs[i][0] \
+                    and not RE_REPONSE_NEUTRE.fullmatch(t.strip()):
                 relance = self.verifier(qs[i], t)
-                if self.erreur_llm:
-                    self.synchroniser()
+                if self.erreur_llm:                        # l'IA est indisponible : la réponse est gardée,
+                    self.synchroniser()                    # on enchaîne sans relance (pas de blocage)
                     self.save()
-                    return [msg(self.erreur_llm + "\n(Votre réponse est enregistrée ; /mode rapide pour "
-                                "continuer sans IA.)", BTN_QUESTION)]
+                    return [self.erreur_llm + "\n(Votre réponse est enregistrée ; pas de relance IA pour "
+                            "cette question. /mode rapide pour continuer sans IA.)"] + self.avancer_question()
                 if relance:
                     st["rel"] = i
                     self.noter("c", relance)
@@ -1615,7 +1710,9 @@ class Session:
     def rca_etat(self):
         return rca_calcul(self.rca["ev"])
 
-    def rca_prompt(self, S=None):
+    def rca_prompt(self, S=None, complet=True):
+        """Question suivante de l'analyse. complet=False (enchaînement) : en FTA, la cause et la consigne
+        ne sont rappelées qu'à la 1re des 3 questions ; /guide ou une reprise remettent tout le contexte."""
         S = S or self.rca_etat()
         if S["ph"] == "ish":
             d, (nom, desc) = DIMENSIONS[S["dim"]], SIX_M[S["m"]]
@@ -1631,9 +1728,11 @@ class Session:
         if S["ph"] == "fta":
             c = S["causes"][S["fi"]]
             lib, q = FTA_QUESTIONS[S["fq"]]
-            return msg(f"🌳 FTA — cause {rca_lib(c)} : « {c['t']} » ({S['fi'] + 1}/{len(S['causes'])})\n"
-                       f"Question {S['fq'] + 1}/{len(FTA_QUESTIONS)} — {lib}\n{q}\n"
-                       "Répondez par oui ou non (un commentaire peut suivre).", BTN_RCA_FTA)
+            question = f"Question {S['fq'] + 1}/{len(FTA_QUESTIONS)} — {lib}\n{q}"
+            if S["fq"] == 0 or complet:
+                return msg(f"🌳 FTA — cause {rca_lib(c)} : « {c['t']} » ({S['fi'] + 1}/{len(S['causes'])})\n"
+                           f"{question}\nRépondez par oui ou non (un commentaire peut suivre).", BTN_RCA_FTA)
+            return msg(question, BTN_RCA_FTA)
         if S["ph"] == "pq":
             cid = S["prouvees"][S["pi"]]
             c = next(x for x in S["causes"] if x["id"] == cid)
@@ -1680,7 +1779,7 @@ class Session:
         if B["ph"] == "fin":
             out.append("🏁 Analyse des causes terminée.")
             return out + self.avancer_question()
-        return out + [self.rca_prompt(B)]
+        return out + [self.rca_prompt(B, complet=False)]
 
     def rca_repondre(self, t):
         A = self.rca_etat()
@@ -1851,6 +1950,7 @@ class Session:
     def demarrer(self, cle, titre):
         precedent = self.methode
         self._vider_projet()
+        self.purger_vides()                     # le projet précédent, s'il est resté vide, disparaît
         self.methode = cle
         self.titre = titre or "Sans titre"
         self.debut = datetime.now().strftime("%d/%m/%Y %H:%M")
@@ -2087,10 +2187,14 @@ class Session:
             return [msg("Aucun projet ouvert.", BTN_DEMARRER)]
         titre = self.titre
         self.save()
+        vide = self.projet_vide(self._donnees_projet())
         self._vider_projet()
+        self.purger_vides()
         self.attend_titre = False
         self.prefs["actif"] = None
         self.sauver_prefs()
+        if vide:
+            return [msg("📦 Projet fermé (il était vide : rien à conserver).", BTN_DEMARRER)]
         return [msg(f"📦 Projet « {titre} » mis de côté (conservé). /projets pour le ré-ouvrir.",
                     BTN_DEMARRER)]
 
@@ -2353,6 +2457,17 @@ class Session:
         guide = self.guide_actif()
         if t.lower() in OK_WORDS and not (guide and self.questions_restantes()):
             return self.valider()                          # en mode guidé « oui » reste une réponse
+        if guide and self.questions_restantes() and t.lower().strip(" .!") in ACQUIT:
+            if self.rca_actif():
+                if self.rca_etat()["ph"] != "ish":          # (en Ishikawa, « ok » termine le facteur)
+                    return [self.rca_prompt()], None
+            else:
+                st = self.qetat()
+                if (st["r"].get(str(st["i"])) or "").strip():   # question déjà répondue : on garde, on avance
+                    self.noter("s", "Réponse conservée, question suivante.")
+                    return self.avancer_question(), None
+                return ["ℹ️ « ok » n'est pas une réponse : voici la question en cours.",
+                        self.question_msg()], None
         if t.startswith("?") or t.endswith("?"):
             question = t.strip("? ")
             self.noter("q", question)
@@ -2548,6 +2663,9 @@ def boucle_cli():
         print(rendre_cli("⚠️ Clé Groq introuvable (GROQ_API_KEY ou ~/Projects/Groq_agent/.groq_config)."))
     if s.methode:
         print(rendre_cli(f"📂 Projet en cours rechargé : « {s.titre} » — /etat, /historique ou /projets\n"))
+        for m in s.reprise_msgs():                      # on repose la question en attente
+            afficher(rendre_cli(texte_de(m)))
+            print()
     else:
         print(rendre_cli("Aucun projet en cours — /8d, /a3, /pdca, /k6pts ou /projets\n"))
     while True:
