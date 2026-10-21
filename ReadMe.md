@@ -57,7 +57,7 @@ Chaque méthode porte une consigne pour le coach. Exemple pour le **K6pts** (d'a
 ### Mode guidé (par défaut) : une question à la fois
 
 1. L'utilisateur lance une méthode : `/8d Retours clients lot 42`
-2. Le coach présente l'étape (question centrale, attendu, outils), puis pose **les questions de l'étape une par une**. Exemple en 8D / D1 : identification, écart attendu / réel, puis **QQOQCCP déroulé** (Quoi, Qui, Où, Quand, Comment, Combien, Pourquoi), risque, enjeu — 18 questions. Le **QQOQCCP est le même outil en 8D (D1), en A3 (étape 1) et en Kaizen 6 points (K1)**, avec la même structure : le 8D parle de défaut (produit ou processus), l'A3 et le Kaizen d'un défaut **ou** d'une problématique au sens large. Pour **chaque** question du QQOQCCP, le coach demande d'abord l'**Est** (la réponse), puis le **N'est pas** (ce qui pourrait être concerné mais ne l'est pas, pour préciser la réponse) ; le N'est pas peut rester vide (`-`) et n'est jamais relancé par l'IA. Les étapes comptent de 1 à 18 questions (45 en 8D, 41 en A3, 17 en PDCA, 34 en K6pts) ; l'étape **D5 du 8D** suit un déroulé spécifique (voir ci-dessous).
+2. Le coach présente l'étape (question centrale, attendu, outils), puis pose **les questions de l'étape une par une**. Exemple en 8D / D1 : identification, écart attendu / réel, puis **QQOQCCP déroulé** (Quoi, Qui, Où, Quand, Comment, Combien, Pourquoi), risque, enjeu — 18 questions. Le **QQOQCCP est le même outil en 8D (D1), en A3 (étape 1) et en Kaizen 6 points (K1)**, avec la même structure : le 8D parle de défaut (produit ou processus), l'A3 et le Kaizen d'un défaut **ou** d'une problématique au sens large. Pour **chaque** question du QQOQCCP, le coach demande d'abord l'**Est** (la réponse), puis le **N'est pas** (ce qui pourrait être concerné mais ne l'est pas, pour préciser la réponse) ; le N'est pas peut rester vide (`-`) et n'est jamais relancé par l'IA. Les étapes comptent de 1 à 18 questions (43 en 8D, 41 en A3, 17 en PDCA, 34 en K6pts) ; l'étape **D5 du 8D** suit un déroulé spécifique (voir ci-dessous).
 3. Après chaque réponse floue, le coach pose **au plus une relance** ; la réponse à la relance s'ajoute à la précédente et on passe à la question suivante : **le dialogue ne boucle pas**.
 4. Après la dernière question : revue brève de l'étape par rapport à l'attendu (verdict *suffisant* / *à compléter*). L'utilisateur peut ajouter un complément libre, puis tape `/ok`.
 5. À la dernière étape : **revue de cohérence** par le LLM et **rapport Markdown**.
@@ -76,9 +76,32 @@ En modes `guide` et `rapide`, l'étape **D5** se déroule en trois temps, sans a
 
 1. **Ishikawa 6M, une cause à la fois** : Machine, Matière, Main-d'œuvre, Méthodes, Milieu, Mesure. Pour chaque facteur, vous écrivez une cause, puis une autre, et `-` (ou `/sauter`, `ok`, `fin`) passe au facteur suivant. Les causes sont numérotées **O1.1, O1.2… O6.n** pour l'**occurrence**, puis le même travail est fait pour la **non-détection** (**N1.1… N6.n**). Le diagramme de chaque Ishikawa est affiché à la fin.
 2. **FTA, cause par cause** : un standard existe-t-il ? est-il appliqué ? est-il robuste ? (réponse `oui` / `non`, commentaire possible, ou boutons). **Au premier « non », la cause est retenue comme prouvée** ; trois « oui » l'écartent. `/sauter` laisse une cause non évaluée.
-3. **5 Pourquoi en arbre, sur chaque cause prouvée** : une réponse peut avoir plusieurs causes, l'analyse est donc un arbre à plusieurs branches, parcouru en profondeur. Chaque réponse porte un numéro hiérarchique : réponses au 1er pourquoi = **1, 2…** ; leurs enfants = **1.1, 1.2…** ; puis **1.1.1, 1.2.1…** (étiquette complète : `O1.1 › 1.2.1`). Vous répondez « pourquoi ? » de niveau en niveau ; `-` (ou `/fin`, bouton « 🏁 Cause racine atteinte ») termine la branche, et le coach demande alors **une autre réponse au même niveau** (`-` ou « ➡️ Aucune autre réponse » = il n'y en a plus, on remonte d'un niveau). La cause est terminée quand il n'y a plus d'autre réponse au 1er niveau. **Toutes les fins de branche (🎯) sont des causes racines**, chacune fera l'objet d'une action corrective / préventive en D6. Il n'y a pas de nombre imposé : **3 pourquoi peuvent suffire, 5 est un repère, et 6, 7, 8 ou plus sont possibles** : on s'arrête dès que la cause est une cause sur laquelle on peut agir.
+3. **5 Pourquoi en arbre, sur chaque cause prouvée** : une réponse peut avoir plusieurs causes, l'analyse est donc un arbre à plusieurs branches, parcouru en profondeur. Chaque réponse porte un numéro hiérarchique : réponses au 1er pourquoi = **1, 2…** ; leurs enfants = **1.1, 1.2…** ; puis **1.1.1, 1.2.1…** (étiquette complète : `O1.1 - 1.2.1`). Vous répondez « pourquoi ? » de niveau en niveau ; `-`, **Entrée** (ligne vide) ou `/fin` (bouton « 🏁 Cause racine atteinte ») termine la branche, et le coach demande alors **une autre réponse au même niveau** (`-`, Entrée ou « ➡️ Aucune autre réponse » = il n'y en a plus, on remonte d'un niveau). La cause est terminée quand il n'y a plus d'autre réponse au 1er niveau. **Toutes les fins de branche (🎯) sont des causes racines**, chacune fera l'objet d'une action corrective / préventive en D6. Il n'y a pas de nombre imposé : **3 pourquoi peuvent suffire, 5 est un repère, et 6, 7, 8 ou plus sont possibles** : on s'arrête dès que la cause est une cause sur laquelle on peut agir.
 
 `/prec` annule la dernière saisie, à n'importe quel moment. La synthèse (causes racines = fins de branche, arbres des pourquoi, causes prouvées, écartées, non évaluées, puis les deux Ishikawa) est la réponse de l'étape D5 : elle figure dans le rapport et sert de contexte aux étapes suivantes. En mode `libre`, D5 reste une réponse libre.
+
+### D6 du 8D : plan d'actions, cause racine par cause racine
+
+Si l'analyse de D5 a été faite, la première question de **D6** reprend **chaque cause racine** (chaque fin de branche des 5 Pourquoi), l'une après l'autre, **avec sa chaîne complète** rappelée (cause Ishikawa → pourquoi → cause racine), pour que l'on sache toujours de quoi on parle :
+
+1. **Nature de la cause racine** : **Organisation**, **Humaine** ou **Technique** (boutons, ou `o` / `h` / `t`).
+2. **Une ou plusieurs actions** correctives / préventives pour cette cause, numérotées d'après la cause racine (**n° 3** → actions **3.1, 3.2…**).
+3. Pour **chaque action**, aussitôt après sa saisie, deux invites courtes : `Pilote/Resp. :` puis `Délai :` (en terminal, la réponse se tape sur la même ligne que la question) (`-` les laisse « à définir »).
+4. `-` ou Entrée = plus d'autre action, on passe à la cause racine suivante (`/sauter` passe la cause sans action).
+
+`/prec` annule la dernière saisie. Le plan (cause, nature, actions, pilotes, délais) est la réponse à cette question ; viennent ensuite le choix et les risques, la standardisation (VRS) et la validation du management. Si D5 n'a pas été faite, ou si elle est modifiée, la question redevient libre ou le plan repart de zéro.
+
+### Corriger après coup : `/etape` et `/modifier`
+
+Rien n'est figé, ni en cours de démarche, ni une fois la démarche terminée (et son rapport généré).
+
+1. **Rouvrir l'étape à corriger** : `/etape D5` (ou son numéro ; le code est celui de `/etat` : D1…D8, 1…8 en A3, P/D/C/A en PDCA, K1…K6 en Kaizen). L'étape est rouverte avec ses réponses ; **toutes les autres étapes sont conservées**. Fonctionne aussi après `/charger <n>` sur un projet terminé.
+2. **Corriger une saisie précise** : `/modifier` liste les saisies de l'étape, numérotées ; `/modifier <n> <nouveau texte>` remplace la saisie n.
+   - **Analyse des causes (D5, A3, PDCA, Kaizen)** : les causes Ishikawa et chaque réponse de l'arbre des pourquoi sont listées (« Cause O1.1 », « Pourquoi O1.1 - 1.2 »…) ; la structure de l'arbre et la numérotation sont conservées.
+   - **Plan d'actions (D6)** : nature, action, pilote et délai de chaque action (« Action 3.1 », « Pilote 3.1 », « Délai 3.1 »). `-` comme texte laisse un pilote ou un délai « à définir ».
+   - **Questions de l'étape** : `/modifier Q2 <réponse>` (ou `/modifier 2 <réponse>` hors analyse) ; `-` comme texte efface la réponse.
+   - Fonctionne **aussi pendant l'analyse**, sans repasser par `/prec`. `/prec` reste l'outil pour **ajouter ou retirer** une saisie (changer la structure de l'analyse).
+3. **Revalider** : `/ok` revalide l'étape et **revient directement à l'étape où vous en étiez** (les étapes intermédiaires ne sont pas à reparcourir). Le plan d'actions D6 reprend automatiquement les textes corrigés de D5 ; si les causes racines elles-mêmes changent (une de plus ou de moins), le plan D6 est à refaire. Sur une démarche terminée, la revalidation de la dernière étape **régénère le rapport** (nouveau fichier horodaté).
 
 ### Trois modes (`/mode`)
 
@@ -100,28 +123,29 @@ Le mode est mémorisé ; passer de `libre` à `guide` conserve le texte déjà s
 
 ### Commandes
 
-| Commande                                               | Description                                                                                   |
-|---                                                     |---                                                                                            |
-| `/8d` `/a3` `/pdca` `/k6pts` `[titre]`                 | Démarre une démarche                                                                          |
-| *(texte libre)*                                        | Réponse à la question en cours (mode guidé)                                                   |
-| `-` · `/sauter` · `/prec`                              | Saute la question · revient à la précédente                                                   |
-| *phrase avec « ? »*                                    | Question posée au coach (explication générale)                                                |
-| `/ok`                                                  | Valide l'étape (`/ok force` s'il reste des questions)                                         |
-| `/reponse` · `/effacer`                                | Relit les réponses de l'étape · recommence l'étape                                            |
-| `/passer` · `/retour`                                  | Saute l'étape · revient à la précédente (ou rouvre la dernière étape d'une démarche terminée) |
-| `/guide`                                               | Rappelle l'étape (attendu, outils) et la question en cours                                    |
-| `/oui` · `/non` · `/fin`                               | Analyse des causes : réponse FTA · fin d'un facteur (Ishikawa) ou d'une branche des pourquoi  |
-| `/sanscauses`                                          | A3, PDCA, Kaizen : passe l'analyse des causes                                                 |
-| `/etat`                                                | Résumé des étapes (✅ faite, 👉 en cours, 📷 photos, 💬 échanges)                             |
-| `/titre [texte]` · `/sauver [titre]`                   | Titre · enregistrement explicite                                                              |
-| `/projets` · `/charger <n>` · `/supprimer <n>`         | Liste, réouverture, suppression                                                               |
-| `/stop`                                                | Met le projet de côté (conservé)                                                              |
-| `/historique [étape\|tout]` · `/rapport [complet]`     | Relecture des échanges · rapport                                                              |
-| `/modele`                                              | Moteur (Groq / Ollama), modèle texte, modèle photos, mode — **boutons** sous Telegram         |
-| `/mode guide\|rapide\|libre` · `/backend groq\|ollama` | Raccourcis                                                                                    |
-| `/aide` · `/help`                                      | Menu des commandes : **tableau** en terminal, liste sous Telegram                             |
-| `/q` · `/quit`                                         | **Terminal uniquement** : quitte le programme (le projet est enregistré)                      |
-| `/photo <chemin> [légende]`                            | **Terminal uniquement** : analyse une image locale                                            |
+| Commande                                               | Description                                                                                      |
+|---                                                     |---                                                                                               |
+| `/8d` `/a3` `/pdca` `/k6pts` `[titre]`                 | Démarre une démarche                                                                             |
+| *(texte libre)*                                        | Réponse à la question en cours (mode guidé)                                                      |
+| `-` · `/sauter` · `/prec`                              | Saute la question · revient à la précédente                                                      |
+| *phrase avec « ? »*                                    | Question posée au coach (explication générale)                                                   |
+| `/ok`                                                  | Valide l'étape (`/ok force` s'il reste des questions)                                            |
+| `/reponse` · `/effacer`                                | Relit les réponses de l'étape · recommence l'étape                                               |
+| `/passer` · `/retour`                                  | Saute l'étape · revient à la précédente (ou rouvre la dernière étape d'une démarche terminée)    |
+| `/etape <code>` · `/modifier [n] [texte]`              | Rouvre une étape déjà atteinte (même démarche terminée) · liste / corrige une saisie précise     |
+| `/guide`                                               | Rappelle l'étape (attendu, outils) et la question en cours                                       |
+| `/oui` · `/non` · `/fin`                               | Analyse des causes : réponse FTA · fin d'un facteur (Ishikawa) ou d'une branche des pourquoi     |
+| `/sanscauses`                                          | A3, PDCA, Kaizen : passe l'analyse des causes                                                    |
+| `/etat`                                                | Résumé des étapes (✅ faite, 👉 en cours, 📷 photos, 💬 échanges)                                |
+| `/titre [texte]` · `/sauver [titre]`                   | Titre · enregistrement explicite                                                                 |
+| `/projets` · `/charger <n>` · `/supprimer <n>`         | Liste, réouverture, suppression                                                                  |
+| `/stop`                                                | Met le projet de côté (conservé)                                                                 |
+| `/historique [étape\|tout]` · `/rapport [complet]`     | Relecture des échanges · rapport                                                                 |
+| `/modele`                                              | Moteur (Groq / Ollama), modèle texte, modèle photos, mode — **boutons** sous Telegram            |
+| `/mode guide\|rapide\|libre` · `/backend groq\|ollama` | Raccourcis                                                                                       |
+| `/aide` · `/help`                                      | Menu des commandes : **tableau** en terminal, liste sous Telegram                                |
+| `/q` · `/quit`                                         | **Terminal uniquement** : quitte le programme (le projet est enregistré)                         |
+| `/photo <chemin> [légende]`                            | **Terminal uniquement** : analyse une image locale                                               |
 
 Sous Telegram, chaque message porte les **boutons** utiles (valider, sauter, état, projets, modèles…) : un bouton exécute simplement la commande correspondante.
 

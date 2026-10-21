@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # =============================================================================
-#  Problem Solving — coach de résolution de problèmes
+#  Problem Solving — coach en résolution de problèmes
 #  Méthodes : 8D · A3 · PDCA · Kaizen 6 points
 #
 #  Cœur du système (méthodes, résolution problèmes, LLM, analyse de photos, mode terminal).
@@ -41,8 +41,8 @@
 #  Données : sessions/<utilisateur>/<projet>.json (+ _prefs.json) · rapports/*.md
 #
 #  Test en terminal :  python3 problem_solving.py
-#  Splash : icons/ProblemSolving.png s'affiche 2 s au lancement en terminal (si un écran est
-#           disponible) ; --no-splash le désactive. Jamais affiché par le bot Telegram.
+#  Splash : icons/ProblemSolving.png s'affiche 2 s au lancement en terminal (si un écran est disponible) ;
+#           --no-splash le désactive. Jamais affiché par le bot Telegram.
 #
 #  Auteur : Jean-François BRUNET – JFBConseils – Octobre 2026
 #  Rev.   : 
@@ -65,7 +65,7 @@ import requests
 
 try:
     from PIL import Image, ImageOps
-except ImportError:  # Pillow facultatif
+except ImportError:       # Pillow facultatif
     Image = None
 
 try:                      # splash : tkinter et ImageTk facultatifs (Pi sans écran, Termux…)
@@ -158,7 +158,7 @@ METHODES = {
                      "pérenniser (D7-D8)."),
         "note": ("Démarche 8D : la définition du problème (D1) est l'une des étapes les plus "
                  "importantes ; la sécurisation (D4) est temporaire et protège le client à 100 % "
-                 "sans traiter les causes ; D5 exige des causes racines prouvées pour l'occurrence ET "
+                 "sans traiter les causes ; D5 exige des causes racines prouvées pour l'occurrence & "
                  "pour la non-détection (6M, FTA, 5 Pourquoi) ; D6 au moins une action par cause racine, "
                  "standardisée ; D7 une preuve que ça tient et la transversalisation."),
         "etapes": [
@@ -216,20 +216,19 @@ METHODES = {
                "5 Pourquoi sur chaque facteur prouvé, jusqu'à la cause racine",
                "Les deux dimensions sont-elles traitées : occurrence & non-détection ?"],
               "6M (Ishikawa), FTA (Factor Tree Analysis), 5 Pourquoi, DOE si besoin"),
-            E("D6", "Actions correctives et préventives", "Que faire pour l'éliminer ?",
+            E("D6", "Actions correctives et préventives", "Que faire pour traiter la problématique ?",
               "Au moins une action en face de chaque cause racine, validée par le management, qui "
-              "résout le problème sans créer d'autre effet néfaste ; standards adaptés et suivis (VRS).",
-              ["Nature de chaque cause racine : technique, systémique ou management",
-               "Solutions possibles pour chaque cause racine, puis choix selon coût, délai, facilité, "
-               "efficacité",
+              "résout le problème sans créer d'autre effet néfaste ; standards adaptés, suivis et vérifiés (VRS).",
+              ["Pour chaque cause racine : nature (Organisation, Humaine, Technique), solutions possibles, "
+               "chaque action avec un pilote et un délai ; puis choix selon coût, délai, facilité, efficacité",
                "Analyse de risques (AMDEC) : pas d'effet néfaste ?",
                "Plan d'actions court terme (quoi, qui, quand) et plan d'amélioration long terme",
-               "Standardisation : procédures, instructions, modes opératoires modifiés ; suivi du "
-               "respect des standards (VRS)",
+               "Standardisation : procédures, instructions, modes opératoires ; Vérification du "
+               "Respect des Standards (VRS)",
                "Validation par le management"],
-              "Matrice de sélection des actions, AMDEC, plan d'actions, plan d'amélioration de la qualité"),
-            E("D7", "Efficacité des actions et transversalisation", "Ça tient, et on généralise ?",
-              "La preuve que la solution tient dans le temps (non-réapparition) et que le retour aux "
+              "Matrice de sélection & priorisation des actions, AMDEC, plan d'actions, plan d'amélioration de la qualité"),
+            E("D7", "Efficacité des actions et transversalisation", "Peut-on désormais valider (et transversaliser) ?",
+              "La preuve que la solution est pérenne (non-réapparition) et que la réapparition des "
               "écarts antérieurs est impossible ; actions préventives étendues aux cas similaires.",
               ["Résultats mesurés : objectifs techniques et économiques atteints, pas de dérive",
                "Robustesse : le problème ne réapparaît pas (quels indicateurs, sur quelle durée ?)",
@@ -546,13 +545,10 @@ QUESTIONS = {
           "5 Pourquoi sur les causes prouvées."),
     ],
     ("8d", "D6"): [
-        Q("Nature des causes", "Quelle est la nature de chaque cause racine : technique, systémique ou "
-          "management ?"),
-        Q("Actions", "Quelles actions correctives et préventives pour chaque cause racine (plusieurs solutions "
-          "si possible) ?"),
+        Q("Actions", "Pour chaque cause racine : sa nature (Organisation, Humaine ou Technique), puis les actions "
+          "correctives et préventives (plusieurs solutions si possible), chacune avec un pilote et un délai."),
         Q("Choix et risques", "Comment les avez-vous choisies (coût, délai, facilité, efficacité) ? Quels "
           "risques d'effet néfaste (AMDEC) ?"),
-        Q("Plan d'actions", "Plan d'actions : qui fait quoi, pour quand ?"),
         Q("Standardisation", "Quels standards (procédures, instructions, modes opératoires) seront modifiés, "
           "et comment suivre leur respect (VRS) ?"),
         Q("Validation management", "Le management a-t-il validé le choix des actions ?"),
@@ -697,7 +693,7 @@ for (_cle, _code), _qs in QUESTIONS.items():
     for _e in METHODES[_cle]["etapes"]:
         if _e["code"] == _code:
             _e["questions"] = _qs
-for _m in METHODES.values():                       # étape sans questions écrites : les points à couvrir
+for _m in METHODES.values():          # étape sans question écrite : les points à couvrir
     for _e in _m["etapes"]:
         _e.setdefault("questions", [Q(p.split(" :")[0][:40], p) for p in _e["points"]])
 
@@ -740,6 +736,8 @@ AIDE_SECTIONS = [
         ("/photo <chemin> [légende]", "Analyse une image, jointe au rapport", "cli"),
         ("/ok    ou    ok", "Valide l'étape", ""),
         ("/passer     /retour", "Passe l'étape / Revient à l'étape précédente", ""),
+        ("/etape <code|n>", "Ré-ouvre une étape déjà atteinte (même terminée), /ok revalide", ""),
+        ("/modifier [n] [texte]", "Liste / corrige une saisie précise de l'étape (même en analyse)", ""),
         ("/reponse    /effacer", "Relit vos réponses de l'étape / Recommence l'étape", ""),
         ("/guide      /etat", "Rappelle l'attendu et la question / Résumé des étapes", ""),
         ("/oui  /non  /fin", "Analyse des causes : réponse FTA / fin d'un facteur ou d'une branche", ""),
@@ -751,8 +749,7 @@ AIDE_SECTIONS = [
         ("/mode libre", "Vous écrivez librement, le coach commente l'ensemble", ""),
     ]),
     ("PROJETS", [
-        ("/projets", "Liste de vos projets", ""),
-        ("/charger <n>", "Ré-ouvre un projet avec tout son historique", ""),
+        ("/projets    /charger <n>", "Liste de vos projets / Ré-ouvre un projet avec tout son historique", ""),
         ("/sauver     /stop", "Enregistre (automatiquement) / Met de côté", ""),
         ("/titre [texte]", "Définit ou modifie le titre, à tout moment", ""),
         ("/historique [étape|tout]", "Relit les échanges conservés", ""),
@@ -794,7 +791,7 @@ def aide_tableau(largeur=None, court=False):
     inscrit dans le trait de séparation (une ligne par section). court=True : l'essentiel
     seulement (écran de lancement)."""
     import textwrap
-    largeur = min(largeur or largeur_terminal(), 100)
+    largeur = min(largeur or largeur_terminal(), 112)
     blocs = ([("COMMANDES ESSENTIELLES", [(c, d, "") for c, d in AIDE_COURTE])]
              if court else AIDE_SECTIONS)
     rangs = [(c, d) for _, lst in blocs for c, d, ou in lst if ou != "tg"]
@@ -826,13 +823,14 @@ AIDE = aide_texte()
 # ----------------------------------------------------------------------------
 # Messages (texte + boutons facultatifs) — un bouton = une commande
 # ----------------------------------------------------------------------------
-def msg(texte, boutons=None, remplace=False):
+def msg(texte, boutons=None, remplace=False, ligne=False):
     """Message sortant. str simple, ou dict {texte, boutons, remplace} si boutons.
     boutons : liste de lignes de (libellé, commande). remplace : à afficher à la place du
-    message d'origine (menus), quand l'action vient d'un bouton."""
-    if not boutons and not remplace:
+    message d'origine (menus), quand l'action vient d'un bouton. ligne : en terminal, la réponse
+    se tape sur la même ligne que la dernière ligne du message (après le « ? » ou le « : »)."""
+    if not boutons and not remplace and not ligne:
         return texte
-    return {"texte": texte, "boutons": boutons or [], "remplace": remplace}
+    return {"texte": texte, "boutons": boutons or [], "remplace": remplace, "ligne": ligne}
 
 def texte_de(m):
     return m["texte"] if isinstance(m, dict) else m
@@ -850,14 +848,18 @@ BTN_RETOUR_COACH = [[("✅ Valider l'étape", "/ok"), ("🧾 Ma réponse", "/rep
 BTN_QUESTION = [[("⏭️ Sauter", "/sauter"), ("↩️ Précédente", "/prec")],
                 [("🧾 Mes réponses", "/reponse"), ("📊 État", "/etat")]]
 BTN_FIN_QUESTIONS = [[("✅ Valider l'étape", "/ok"), ("🧾 Mes réponses", "/reponse")],
-                     [("↩️ Question précédente", "/prec")]]
+                     [("✏️ Corriger une saisie", "/modifier"), ("↩️ Question précédente", "/prec")]]
 BTN_RCA_ISH = [[("➡️ Facteur suivant", "/sauter"), ("↩️ Annuler la dernière", "/prec")]]
 BTN_RCA_FTA = [[("✅ Oui", "/oui"), ("❌ Non", "/non")],
                [("⏭️ Cause non évaluée", "/sauter"), ("↩️ Annuler", "/prec")]]
 BTN_RCA_PQ = [[("🏁 Cause racine atteinte", "/fin"), ("↩️ Annuler", "/prec")]]
+BTN_ACT_NAT = [[("🏢 Organisation", "Organisation"), ("🧑 Humaine", "Humaine"), ("⚙️ Technique", "Technique")],
+               [("⏭️ Cause suivante", "/sauter"), ("↩️ Annuler", "/prec")]]
+BTN_ACT = [[("➡️ Cause suivante", "/fin"), ("↩️ Annuler", "/prec")]]
+BTN_ACT_PD = [[("↩️ Annuler", "/prec")]]
 BTN_RCA_PQ_SIB = [[("➡️ Aucune autre réponse", "/fin"), ("↩️ Annuler", "/prec")]]
 BTN_FIN = [[("📄 Rapport complet", "/rapport complet"), ("📂 Projets", "/projets")],
-           [("↩️ Ré-ouvrir la dernière étape", "/retour")]]
+           [("✏️ Corriger une étape", "/modifier"), ("↩️ Ré-ouvrir la dernière", "/retour")]]
 
 # ----------------------------------------------------------------------------
 # Fichiers
@@ -1075,7 +1077,7 @@ def libelle_modele(backend, usage, modele):
 # Session : utilisateur + projet actif
 # ----------------------------------------------------------------------------
 CHAMPS_PROJET = ("methode", "titre", "titre_propose", "idx", "reponses", "photos", "fil", "qr",
-                 "brouillon", "fini", "debut", "maj", "rca")
+                 "brouillon", "fini", "debut", "maj", "rca", "act", "cible")
 MODES = {"guide": "guidé : une question à la fois, avec relance IA si la réponse est floue",
          "rapide": "rapide : une question à la fois, sans appel IA (idéal avec un modèle local lent)",
          "libre": "libre : vous écrivez la réponse de l'étape, le coach commente"}
@@ -1208,9 +1210,12 @@ def rca_resume(S, ndim=2):
     arbres = [(c, S["arbre"][c["id"]]) for c in prouvees if S["arbre"].get(c["id"], {}).get("n")]
     if arbres:
         L.append("Causes Racines (fin de chaque branche des 5 Pourquoi)")
+        num = 0
         for c, T in arbres:
             if T["f"]:
-                L += [f"- {c['id']} › {rca_cle(q)} : {T['n'][q]}" for q in sorted(T["f"])]
+                for q in sorted(T["f"]):
+                    num += 1
+                    L.append(f"{num}. {c['id']} - {rca_cle(q)} : {T['n'][q]}")
             else:
                 L.append(f"- {c['id']} : analyse en cours")
         L += ["", "ARBRES DES POURQUOI (🎯 = cause racine)"]
@@ -1238,6 +1243,96 @@ def rca_resume(S, ndim=2):
                 L.append(f"- {m + 1} {nom} : " + (" ; ".join(f"{c['id']} {c['t']}" for c in x) if x else "—"))
     return "\n".join(L).strip()
 
+# ----------------------------------------------------------------------------
+# D6 : pour chaque cause racine (fin de branche des 5 Pourquoi) : nature, puis actions (pilote, délai)
+#   ["n", nature] · ["a", action] · ["p", pilote] · ["d", délai] · ["z"] plus d'autre action · ["s"] cause passée
+# ----------------------------------------------------------------------------
+NATURES = ["Organisation", "Humaine", "Technique"]
+ALIAS_NATURE = {"organisation": 0, "orga": 0, "o": 0, "1": 0, "humaine": 1, "humain": 1, "h": 1, "2": 1,
+                "technique": 2, "tech": 2, "t": 2, "3": 2}
+
+def act_calcul(ev, n):
+    """Rejoue le journal : phase (nat, act, pil, del, fin), cause courante, natures et actions."""
+    S = {"ph": "nat" if n else "fin", "ci": 0, "nat": {}, "acts": {}}
+
+    def suivante():
+        S["ci"] += 1
+        S["ph"] = "nat" if S["ci"] < n else "fin"
+    for e in ev:
+        if S["ph"] == "fin":
+            break
+        k, ci = e[0], S["ci"]
+        L = S["acts"].setdefault(ci, [])
+        if k == "n" and S["ph"] == "nat":
+            S["nat"][ci], S["ph"] = e[1], "act"
+        elif k == "a" and S["ph"] == "act":
+            L.append({"a": e[1], "p": "", "d": ""})
+            S["ph"] = "pil"
+        elif k == "p" and S["ph"] == "pil":
+            L[-1]["p"], S["ph"] = e[1], "del"
+        elif k == "d" and S["ph"] == "del":
+            L[-1]["d"], S["ph"] = e[1], "act"
+        elif k == "z" and S["ph"] == "act" and L:
+            suivante()
+        elif k == "s" and S["ph"] in ("nat", "act"):
+            suivante()
+    return S
+
+def act_resume(S, causes):
+    L = [] if S["ph"] == "fin" else ["(plan d'actions en cours)"]
+    for ci, c in enumerate(causes):
+        if ci > S["ci"] and S["ph"] != "fin":
+            break
+        L.append(f"{ci + 1}. {c['label']} — {' → '.join(c['chaine'])}")
+        if ci in S["nat"]:
+            L.append(f"  Nature : {S['nat'][ci]}")
+        acts = S["acts"].get(ci) or []
+        for i, a in enumerate(acts, 1):
+            L.append(f"  Action {ci + 1}.{i} : {a['a']} — pilote : {a['p'] or '?'} — délai : {a['d'] or '?'}")
+        if not acts and (ci < S["ci"] or S["ph"] == "fin"):
+            L.append("  Aucune action définie")
+    return "\n".join(L)
+
+def rca_journal(ev, ndim):
+    """Saisies de texte de l'analyse des causes, modifiables : [(indice de l'événement, libellé, texte)]."""
+    out = []
+    for i, e in enumerate(ev):
+        if e[0] not in ("c", "p"):
+            continue
+        A = rca_calcul(ev[:i], ndim)
+        if e[0] == "c" and A["ph"] == "ish":
+            n = 1 + sum(1 for c in A["causes"] if c["dim"] == A["dim"] and c["m"] == A["m"])
+            lib = f"Cause {DIMENSIONS[A['dim']][0]}{A['m'] + 1}.{n}"
+        elif e[0] == "p" and A["ph"] == "pq":
+            lib = f"Pourquoi {A['prouvees'][A['pi']]} - {rca_cle(rca_calcul(ev[:i + 1], ndim)['cur'])}"
+        else:
+            continue
+        out.append((i, lib, e[1]))
+    return out
+
+def act_journal(ev, n):
+    """Saisies du plan d'actions, modifiables : nature, action, pilote, délai."""
+    out = []
+    for i, e in enumerate(ev):
+        if e[0] not in ("n", "a", "p", "d"):
+            continue
+        A = act_calcul(ev[:i], n)
+        if A["ph"] == "fin":
+            break
+        ci, k = A["ci"], len(A["acts"].get(A["ci"]) or [])
+        if e[0] == "n" and A["ph"] == "nat":
+            lib = f"Nature {ci + 1}"
+        elif e[0] == "a" and A["ph"] == "act":
+            lib = f"Action {ci + 1}.{k + 1}"
+        elif e[0] == "p" and A["ph"] == "pil":
+            lib = f"Pilote {ci + 1}.{k}"
+        elif e[0] == "d" and A["ph"] == "del":
+            lib = f"Délai {ci + 1}.{k}"
+        else:
+            continue
+        out.append((i, lib, e[1]))
+    return out
+
 class Session:
     def __init__(self, uid):
         self.uid = str(uid)
@@ -1263,7 +1358,7 @@ class Session:
         if not isinstance(d, dict):
             return False
         return not (d.get("titre") not in (None, "", "Sans titre") or d.get("reponses") or d.get("fil") or d.get("photos") or (d.get("brouillon") or "").strip()
-                    or (d.get("rca") or {}).get("ev")
+                    or (d.get("rca") or {}).get("ev") or (d.get("act") or {}).get("ev")
                     or any((st or {}).get("r") or (st or {}).get("c") for st in (d.get("qr") or {}).values()))
 
     def purger_vides(self):
@@ -1320,7 +1415,9 @@ class Session:
         self.qr = {}              # mode guidé : code d'étape -> {"i": question en cours, "r": {n: réponse}, "rel": n|None}
         self.brouillon = ""       # réponse en cours (cumul de vos messages sur l'étape)
         self.rca = {"ev": []}     # D5 : journal des saisies (causes Ishikawa, réponses FTA, pourquoi)
+        self.act = {"ev": [], "sig": []}   # D6 : journal du plan d'actions (nature, actions, pilote, délai)
         self.fini = False
+        self.cible = None         # n° d'étape où revenir après la correction d'une étape antérieure (/etape)
         self.debut = ""
         self.maj = ""
 
@@ -1358,6 +1455,22 @@ class Session:
             st["i"] = 1
         if not isinstance(self.rca, dict) or "ev" not in self.rca:
             self.rca = {"ev": []}
+        if not isinstance(self.act, dict) or "ev" not in self.act:
+            self.act = {"ev": [], "sig": []}
+        d6 = self.qr.get("D6")
+        if self.methode == "8d" and d6 and d6.get("v") != 2:      # ancien D6 : 6 questions, sans plan par cause
+            old = d6.get("r") or {}
+            new = {}
+            if (old.get("1") or "").strip() or (old.get("3") or "").strip():
+                new["0"] = "\n".join(x for x in ((old.get("1") or "").strip(),
+                                                  ("Plan d'actions : " + old["3"].strip()) if (old.get("3") or "").strip() else "") if x)
+            for a, b in (("2", "1"), ("4", "2"), ("5", "3")):
+                if (old.get(a) or "").strip():
+                    new[b] = old[a]
+            d6["r"] = new
+            d6["i"] = {0: 0, 1: 0, 2: 1, 3: 2, 4: 2, 5: 3}.get(int(d6.get("i") or 0), 4)
+            d6["rel"] = None
+            d6["v"] = 2
         return True
 
     def _migrer_ancien(self):
@@ -1469,6 +1582,8 @@ class Session:
     def question_msg(self):
         if self.rca_actif():
             return self.rca_prompt()
+        if self.act_actif():
+            return self.act_prompt()
         st = self.qetat()
         qs = self.questions()
         i = st["i"]
@@ -1581,7 +1696,7 @@ class Session:
         if not st.get("r") and not st.get("c"):             # étape à peine commencée
             return [entete] + self.invite_msgs()
         sortie = [entete]
-        if st.get("rel") is not None:                       # une relance de l'IA attendait une réponse
+        if st.get("rel") is not None and not (self.rca_actif() or self.act_actif()):   # relance de l'IA en attente
             relances = [e for e in self.fil.get(self.code, []) if e["r"] == "c"]
             if relances:
                 sortie.append("🔎 " + relances[-1]["t"])
@@ -1692,6 +1807,8 @@ class Session:
         """Mode guidé : t est la réponse à la question en cours. Retourne la liste des messages."""
         if self.rca_actif():
             return self.rca_repondre(t)
+        if self.act_actif():
+            return self.act_repondre(t)
         st = self.qetat()
         qs = self.questions()
         i = st["i"]
@@ -1768,9 +1885,9 @@ class Session:
             tete = f"🐟 Ishikawa {d[1]} — facteur {S['m'] + 1}/{len(SIX_M)} : {nom}"
             if n == 1:
                 corps = (f"{nom} : {desc}.\n{d[2]} à cause de ce facteur ? Écrivez UNE cause "
-                         f"(n° {cid}), ou « - » s'il n'y en a aucune.")
+                         f"(n° {cid}), ou « - » (ou Entrée) s'il n'y en a aucune.")
             else:
-                corps = f"Une autre cause {nom} ({cid}) ? Écrivez-la, ou « - » s'il n'y en a plus."
+                corps = f"Une autre cause {nom} ({cid}) ? Écrivez-la, ou « - » (ou Entrée) s'il n'y en a plus."
             btn = BTN_RCA_ISH
             if self.rca_cfg()[2] == 1 and not S["causes"] and S["m"] == 0:
                 btn = BTN_RCA_ISH + [[("⏭️ Passer l'analyse des causes", "/sanscauses")]]
@@ -1781,7 +1898,7 @@ class Session:
             question = f"Question {S['fq'] + 1}/{len(FTA_QUESTIONS)} — {lib}\n{q}"
             if S["fq"] == 0 or complet:
                 return msg(f"🌳 FTA — cause {rca_lib(c)} : « {c['t']} » ({S['fi'] + 1}/{len(S['causes'])})\n"
-                           f"{question}\nRépondez par oui ou non (un commentaire peut suivre).", BTN_RCA_FTA)
+                           f"{question}\nRépondez par oui ou non (avec un commentaire si nécessaire).", BTN_RCA_FTA)
             return msg(question, BTN_RCA_FTA)
         if S["ph"] == "pq":
             cid = S["prouvees"][S["pi"]]
@@ -1794,26 +1911,25 @@ class Session:
             tete = (f"❓ 5 Pourquoi — cause prouvée {rca_lib(c)} : « {c['t']} » "
                     f"({S['pi'] + 1}/{len(S['prouvees'])})")
             intro = ""
-            if (not T["n"]) or complet:
-                intro = ("Arbre : une réponse peut avoir plusieurs causes. Chaque réponse est numérotée "
-                         "(1, 1.1, 1.2, 2…). Je vous demande « pourquoi ? » jusqu'à la fin de la branche, puis "
-                         "une autre réponse au même niveau. Les fins de branche (🎯) sont donc des causes racines : arrêtez-vous "
-                         "dès qu'on peut agir sur la cause (parfois 3 pourquoi peuvent suffire, 5 n'est qu'un repère, "
-                         "... 7, 8 ou plus sont parfois nécessaires).")
+            if complet or (S["pi"] == 0 and not T["n"]):          # explication : une seule fois (1re cause)
+                intro = ("Une réponse peut avoir plusieurs causes. Chaque réponse est numérotée "
+                         "(1, 1.1, 1.2, 2…). Je vous demande « pourquoi ? » jusqu'à la fin de la branche. "
+                         "Les terminaisons (🎯) sont donc des causes racines "
+                         "(parfois 3 pourquoi peuvent suffire, mais... 7, 8 ou plus sont parfois nécessaires).")
                 if T["n"]:
                     intro += "\nArbre actuel :\n" + rca_arbre_txt(T)
             if mode == "sib":
                 corps = (f"🌿 Une autre réponse (n° {rca_cle(nid)}) à {sujet} ? "
-                         "Écrivez-la, ou « - » s'il n'y en a plus.")
+                         "Écrivez-la, ou « - » (ou Entrée) s'il n'y en a plus.")
                 btn = BTN_RCA_PQ_SIB
             else:
-                pourquoi = "pourquoi cette cause est-elle présente ?" if not parent else f"pourquoi {sujet} ?"
-                corps = f"Pourquoi {len(nid)} (réponse {rca_cle(nid)}) — {pourquoi}"
+                corps = f"Pourquoi {len(nid)} (réponse {rca_cle(nid)}) — pourquoi {sujet} ?" if parent else ""
                 if len(nid) >= 3:
-                    corps += "\n« - » (ou /fin) si la dernière réponse est une cause racine."
+                    corps += "\n« - », Entrée ou /fin si la dernière réponse est une cause racine."
+                corps = corps.strip()
                 btn = BTN_RCA_PQ
             haut = "\n".join(x for x in (tete if (intro or not T["n"]) else "", intro) if x)
-            return msg((haut + "\n" if haut else "") + corps, btn)
+            return msg("\n".join(x for x in (haut, corps) if x), btn)
         return msg("🏁 Analyse des causes terminée. /ok pour valider l'étape, /prec pour corriger.",
                    BTN_FIN_QUESTIONS)
 
@@ -1925,8 +2041,8 @@ class Session:
                 self.noter("s", f"Pas d'autre réponse au niveau {rca_cle(cur)}.")
                 return self.rca_suite(A)
             ev.append(["pf"])
-            self.noter("s", f"Cause racine de {cid} › {rca_cle(cur)} : {T['n'][cur]}")
-            return self.rca_suite(A, [f"🎯 Cause racine {cid} › {rca_cle(cur)} : « {coupe(T['n'][cur], 200)} »."])
+            self.noter("s", f"Cause racine de {cid} - {rca_cle(cur)} : {T['n'][cur]}")
+            return self.rca_suite(A, [f"🎯 Cause racine {cid} - {rca_cle(cur)} : « {coupe(T['n'][cur], 200)} »."])
         return [self.rca_prompt(A)]
 
     def rca_prec(self):
@@ -1952,6 +2068,324 @@ class Session:
                 "pf": "la fin de branche", "pn": "« aucune autre réponse »",
                 "x": "le passage de l'analyse"}[derniere[0]]
         return [f"↩️ Annulé : {quoi}.", self.rca_prompt(B)]
+
+    # -- D6 : plan d'actions cause racine par cause racine ----------------------------
+    def act_causes(self):
+        """Causes racines de D5 (fins de branche des 5 Pourquoi), avec leur chaîne complète de causes."""
+        if self.methode != "8d" or not (self.rca or {}).get("ev"):
+            return []
+        S = self.rca_etat()
+        out = []
+        for cid in S["prouvees"]:
+            T = S["arbre"].get(cid, {"n": {}, "f": []})
+            c = next(x for x in S["causes"] if x["id"] == cid)
+            for q in sorted(T["f"]):
+                out.append({"label": f"{cid} - {rca_cle(q)}", "racine": T["n"][q],
+                            "chaine": [f"{c['t']} ({SIX_M[c['m']][0]})"] + [T["n"][q[:k]] for k in range(1, len(q) + 1)]})
+        return out
+
+    def act_step(self):
+        return self.methode == "8d" and self.code == "D6" and self.guide_actif() and not self.fini \
+            and bool(self.act_causes())
+
+    def act_actif(self):
+        return self.act_step() and self.qetat()["i"] == 0
+
+    def act_etat(self):
+        causes = self.act_causes()
+        sig = [c["label"] for c in causes]
+        if self.act.get("sig") != sig:                    # D5 a changé : le plan d'actions repart de zéro
+            self.act = {"ev": [], "sig": sig}
+        return act_calcul(self.act["ev"], len(causes))
+
+    def act_prompt(self, S=None, complet=True):
+        S = S or self.act_etat()
+        causes = self.act_causes()
+        if S["ph"] == "fin":
+            return msg("🏁 Plan d'actions terminé. /ok pour valider l'étape, /prec pour corriger.", BTN_FIN_QUESTIONS)
+        ci = S["ci"]
+        c = causes[ci]
+        acts = S["acts"].get(ci) or []
+        corps = c["chaine"][:-1]                           # cause puis pourquoi intermédiaires ; la racine porte son numéro
+        chaine = "\n".join([("   " if k == 0 else "   → ") + t for k, t in enumerate(corps)]
+                           + [f"{c['label']} → {c['racine']}"])
+        n = ci + 1
+        if S["ph"] == "nat":
+            intro = ""
+            if complet or ci == 0:
+                intro = ("Pour chaque cause racine : sa nature, puis une ou plusieurs actions correctives / "
+                         "préventives, chacune avec un pilote et un délai.\n")
+            tete = f"{n}. Cause racine {n}/{len(causes)}\n{chaine}"
+            return msg(f"{intro}{tete}\nNature (Organisation, Humaine ou Technique) ?", BTN_ACT_NAT, ligne=True)
+        if S["ph"] == "act":
+            if not acts:
+                return msg(f"Action {n}.1 ({c['label']}) :", BTN_ACT, ligne=True)
+            return msg(f"Action {n}.{len(acts) + 1} ({c['label']} ; Entrée = cause racine suivante) :",
+                       BTN_ACT, ligne=True)
+        if S["ph"] == "pil":
+            return msg("Pilote/Resp. :", BTN_ACT_PD, ligne=True)
+        return msg("Délai :", BTN_ACT_PD, ligne=True)
+
+    def act_sync(self, S):
+        st = self.qetat()
+        st["r"]["0"] = act_resume(S, self.act_causes())
+        self.synchroniser()
+        self.save()
+
+    def act_suite(self, A, avant=()):
+        B = self.act_etat()
+        out = list(avant)
+        causes = self.act_causes()
+        if B["ci"] > A["ci"] or (B["ph"] == "fin" and A["ph"] != "fin"):
+            n = len(B["acts"].get(A["ci"]) or [])
+            out.append(f"✅ Cause racine n° {A['ci'] + 1} : {n} action{'s' if n > 1 else ''}." if n
+                       else f"⏭️ Cause racine n° {A['ci'] + 1} : aucune action.")
+        self.act_sync(B)
+        if B["ph"] == "fin":
+            out.append("🏁 Plan d'actions terminé.")
+            return out + self.avancer_question()
+        return out + [self.act_prompt(B, complet=False)]
+
+    def act_repondre(self, t):
+        A = self.act_etat()
+        ev = self.act["ev"]
+        if A["ph"] == "nat":
+            i = ALIAS_NATURE.get(t.lower().strip(" .!"))
+            if i is None:
+                return [msg("Répondez : Organisation, Humaine ou Technique.", BTN_ACT_NAT)]
+            ev.append(["n", NATURES[i]])
+            self.noter("u", f"[Nature {self.act_causes()[A['ci']]['label']}] {NATURES[i]}")
+            return self.act_suite(A)
+        if A["ph"] == "act":
+            if t.lower().strip(" .!") in ("-", "fin", "terminé", "termine", "fini", "aucune", "aucun", "rien"):
+                return self.act_commande("fin")
+            ev.append(["a", t])
+            self.noter("u", f"[Action {self.act_causes()[A['ci']]['label']}] {t}")
+            return self.act_suite(A)
+        if t.strip() == "-":
+            t = ""                                      # « - » : pilote ou délai à définir
+        ev.append(["p" if A["ph"] == "pil" else "d", t])
+        self.noter("u", f"[{'Pilote' if A['ph'] == 'pil' else 'Délai'} {self.act_causes()[A['ci']]['label']}] {t}")
+        return self.act_suite(A)
+
+    def act_commande(self, nom):
+        """/fin (ou « - », Entrée) : plus d'autre action ; /sauter : passe la cause racine."""
+        A = self.act_etat()
+        ev = self.act["ev"]
+        acts = A["acts"].get(A["ci"]) or []
+        if A["ph"] == "nat":
+            if nom == "fin":
+                return [msg("Classez d'abord la cause racine : Organisation, Humaine ou Technique "
+                            "(/sauter pour la passer).", BTN_ACT_NAT)]
+            self.noter("s", f"Cause racine {self.act_causes()[A['ci']]['label']} passée.")
+            ev.append(["s"])
+            return self.act_suite(A)
+        if A["ph"] == "act":
+            if nom == "fin" and acts:
+                ev.append(["z"])
+                return self.act_suite(A)
+            if nom == "fin":
+                return [msg("Au moins une action est attendue pour chaque cause racine. Écrivez-la, "
+                            "ou /sauter pour passer cette cause.", BTN_ACT)]
+            self.noter("s", f"Cause racine {self.act_causes()[A['ci']]['label']} passée.")
+            ev.append(["s"])
+            return self.act_suite(A)
+        ev.append(["p" if A["ph"] == "pil" else "d", ""])      # « - » : pilote ou délai à définir
+        self.noter("s", f"{'Pilote' if A['ph'] == 'pil' else 'Délai'} à définir.")
+        return self.act_suite(A)
+
+    def act_prec(self):
+        st = self.qetat()
+        if st["i"] >= 1:
+            st["i"] = 0
+        ev = self.act["ev"]
+        if not ev:
+            self.save()
+            return [msg("Rien à annuler : le plan d'actions n'a pas encore commencé.", self.act_prompt()["boutons"])]
+        ev.pop()
+        self.noter("s", "Dernière saisie annulée.")
+        B = self.act_etat()
+        self.act_sync(B)
+        return ["↩️ Dernière saisie annulée.", self.act_prompt(B)]
+
+    # -- corrections après coup : /etape (rouvrir une étape) et /modifier (corriger une saisie) -----
+    def trouver_etape(self, arg):
+        a = arg.strip().lower()
+        for i, e in enumerate(self.etapes):
+            if e["code"].lower() == a:
+                return i
+        if a.isdigit() and 1 <= int(a) <= len(self.etapes):
+            return int(a) - 1
+        return None
+
+    def _ranger_courante(self):
+        """Avant de quitter l'étape en cours : une étape ré-ouverte et complète garde sa réponse validée."""
+        if self.fini:
+            return
+        if self.guide_actif():
+            self.synchroniser()
+            if self.brouillon and self.qetat()["i"] >= len(self.questions()) and self.code not in self.reponses:
+                self.reponses[self.code] = self.brouillon
+        elif self.brouillon:
+            self.reponses[self.code] = self.brouillon
+
+    def aller_etape(self, arg):
+        """/etape <code|n> : ré-ouvre une étape déjà atteinte (projet en cours ou terminé) ; le reste est conservé."""
+        k = self.trouver_etape(arg)
+        if k is None:
+            return [msg("Étape inconnue. Indiquez son code ou son numéro : "
+                        + ", ".join(e["code"] for e in self.etapes) + ".", BTN_ETAPE)], None
+        loin = len(self.etapes) - 1 if self.fini else self.idx
+        if self.cible is not None:
+            loin = max(loin, self.cible)
+        if k > loin:
+            return ["Cette étape n'est pas encore atteinte."], None
+        if k == self.idx and not self.fini:
+            return self.invite_msgs(), None
+        self._ranger_courante()
+        if k < loin:
+            self.cible = loin
+        else:
+            self.cible = None
+        self.fini = False
+        self.idx = k
+        code = self.etapes[k]["code"]
+        fait = code in self.reponses
+        self.brouillon = self.reponses.pop(code, "")
+        self.noter("s", f"Étape {code} ré-ouverte pour correction.")
+        if fait:
+            return self.reouvrir_etape(f"↩️ Étape {code} ré-ouverte pour correction (le reste est conservé) :")
+        self.synchroniser()
+        self.save()
+        return self.invite_msgs(), None
+
+    def rafraichir_analyses(self):
+        """Après une correction : le plan d'actions D6 reprend les textes à jour de l'analyse D5."""
+        notes = []
+        if self.methode == "8d" and self.act.get("ev") and "D6" in self.qr:
+            causes = self.act_causes()
+            S = self.act_etat()                            # repart de zéro si les causes racines ont changé
+            st = self.qr["D6"]
+            if not self.act["ev"]:
+                st["i"] = 0
+                st["r"].pop("0", None)
+                self.reponses.pop("D6", None)
+                notes.append("⚠️ Les causes racines de D5 ont changé : le plan d'actions D6 est à refaire.")
+            else:
+                st["r"]["0"] = act_resume(S, causes)
+                if "D6" in self.reponses:
+                    self.reponses["D6"] = self.assembler("D6")
+        return notes
+
+    def revenir_cible(self):
+        """Correction validée : retour direct à l'étape où l'on en était (les étapes intermédiaires sont conservées)."""
+        notes = self.rafraichir_analyses()
+        k, self.cible = self.cible, None
+        self.idx = k
+        code = self.etapes[k]["code"]
+        fait = code in self.reponses
+        self.brouillon = self.reponses.pop(code, "")
+        self.noter("s", f"Retour à l'étape {code}.")
+        intro = [f"✔️ Correction validée — retour à l'étape {code}."] + notes
+        if fait and not self.reponses.get(code) and not self.brouillon and k == len(self.etapes) - 1:
+            self.reponses[code] = ""                       # dernière étape passée : on re-termine directement
+            msgs, fichier = self.avancer()
+            return intro + msgs, fichier
+        if fait:
+            m, _ = self.reouvrir_etape(f"↩️ Étape {code} :")
+            return intro + m, None
+        self.synchroniser()
+        self.save()
+        return intro + self.invite_msgs(), None
+
+    def qi_analyse(self):
+        """N° (à partir de 0) de la question de l'étape qui est une analyse séquencée, sinon None."""
+        if self.rca_step():
+            return self.rca_cfg()[1]
+        if self.act_step():
+            return 0
+        return None
+
+    def analyse_saisies(self):
+        if self.rca_step() and self.rca["ev"]:
+            return "rca", rca_journal(self.rca["ev"], self.rca_cfg()[2])
+        if self.act_step() and self.act["ev"]:
+            self.act_etat()
+            return "act", act_journal(self.act["ev"], len(self.act_causes()))
+        return None, []
+
+    def modifier(self, arg):
+        """/modifier : liste les saisies de l'étape ; /modifier <n> <texte> remplace la saisie n
+        (analyse en cours : saisies numérotées ; questions : Q<n> ou <n>)."""
+        if self.fini:
+            return [self.etat(), "✏️ Pour corriger : /etape <code> (ex. /etape D5), puis /modifier ; "
+                    "/ok revalide et régénère le rapport."]
+        if not self.guide_actif():
+            return ["« /modifier » concerne le mode guidé. En mode libre, renvoyez la réponse complète "
+                    "de l'étape (ou /effacer pour recommencer)."]
+        genre, saisies = self.analyse_saisies()
+        qa = self.qi_analyse()
+        st = self.qetat()
+        qs = self.questions()
+        quest = [(n + 1, qs[n][0], (st["r"].get(str(n)) or "").strip()) for n in range(len(qs)) if n != qa]
+        pref = "Q" if qa is not None else ""
+        btn = [[("▶️ Continuer", "/guide"), ("✅ Valider l'étape", "/ok")]]
+
+        def liste():
+            L = [f"✏️ Corriger une saisie de l'étape {self.code} : /modifier <n> <nouveau texte>"]
+            if saisies:
+                L.append("Analyse :")
+                L += [f"  {k}  {lib} : {coupe(t, 100) or '(vide)'}" for k, (_, lib, t) in enumerate(saisies, 1)]
+            if quest:
+                if saisies:
+                    L.append("Questions (/modifier Q<n> <texte>) :")
+                L += [f"  {pref}{n}  {lib} : {coupe(rep.replace(chr(10), ' / '), 100) or '(sans réponse)'}"
+                      for n, lib, rep in quest]
+            L.append("« - » comme texte efface une réponse. Structure de l'analyse (ajouter, supprimer) : /prec.")
+            return msg("\n".join(L), btn)
+        a = arg.strip()
+        m = re.match(r"^(q)?\s*(\d+)\s*(.*)$", a, re.I | re.S) if a else None
+        if not m:
+            return [liste()]
+        est_q = bool(m.group(1)) or qa is None
+        n, texte = int(m.group(2)), m.group(3).strip()
+        if est_q:
+            if not any(x[0] == n for x in quest):
+                return ["Numéro de question inconnu.", liste()]
+            lib = qs[n - 1][0]
+            if not texte:
+                return [f"Question {n} — {lib} : {st['r'].get(str(n - 1)) or '(sans réponse)'}\n"
+                        f"Pour la corriger : /modifier {pref}{n} <nouvelle réponse>"]
+            if texte == "-":
+                st["r"].pop(str(n - 1), None)
+            else:
+                st["r"][str(n - 1)] = texte
+            self.noter("u", f"[Correction · {lib}] {texte}")
+            self.synchroniser()
+            self.save()
+            return [f"✏️ « {lib} » corrigée.", self.question_msg()]
+        if not 1 <= n <= len(saisies):
+            return ["Numéro de saisie inconnu.", liste()]
+        i, lib, ancien = saisies[n - 1]
+        if not texte:
+            return [f"{lib} : {ancien or '(vide)'}\nPour la corriger : /modifier {n} <nouveau texte>"]
+        if genre == "act" and lib.startswith("Nature"):
+            j = ALIAS_NATURE.get(texte.lower().strip(" .!"))
+            if j is None:
+                return ["Répondez : Organisation, Humaine ou Technique."]
+            texte = NATURES[j]
+        elif texte == "-":
+            if genre == "act" and lib.startswith(("Pilote", "Délai")):
+                texte = ""
+            else:
+                return ["Cette saisie ne peut pas être vide (pour la retirer : /prec)."]
+        (self.rca if genre == "rca" else self.act)["ev"][i][1] = texte
+        if genre == "rca":
+            self.rca_sync(self.rca_etat())
+        else:
+            self.act_sync(self.act_etat())
+        self.noter("u", f"[Correction · {lib}] {texte}")
+        return [f"✏️ {lib} corrigé : « {coupe(ancien, 80)} » → « {coupe(texte, 80)} ».", self.question_msg()]
 
     def coach_question(self, question):
         prompt = (self.entete() + self.fil_pour_llm() +
@@ -2054,6 +2488,10 @@ class Session:
                     if self.guide_actif() else
                     "Rien à valider : rédigez votre réponse à l'étape "
                     "(l'analyse d'une photo ne remplace pas vos propres constats)."], None
+        if self.act_actif() and not force:
+            return [msg("⚠️ Le plan d'actions (une ou plusieurs actions par cause racine, avec pilote et délai) "
+                        "n'est pas terminé. Valider quand même ?",
+                        [[("✅ Valider quand même", "/ok force"), ("▶️ Continuer", "/guide")]])], None
         if self.rca_actif() and not force:
             return [msg("⚠️ L'analyse des causes (Ishikawa, FTA, 5 Pourquoi) n'est pas terminée. "
                         "Valider quand même ?",
@@ -2065,6 +2503,8 @@ class Session:
                         [[("✅ Valider quand même", "/ok force"), ("▶️ Continuer les questions", "/guide")]])], None
         self.reponses[self.code] = self.brouillon
         self.noter("s", "Étape validée.")
+        if self.cible is not None and self.idx < self.cible:
+            return self.revenir_cible()
         premier = self.idx == 0
         msgs, fichier = self.avancer()
         if premier and fichier is None and self.titre == "Sans titre" and not self.titre_propose:
@@ -2220,6 +2660,9 @@ class Session:
         sortie = [f"📂 Projet rechargé : « {self.titre} » ({METHODES[self.methode]['nom']}) — "
                   f"{'terminé ✅' if self.fini else f'étape {self.idx + 1}/{len(self.etapes)}'}",
                   self.etat()]
+        if self.fini:
+            sortie.append("✏️ Pour corriger : /etape <code> (ex. /etape D5), puis /modifier ; "
+                          "/ok revalide et régénère le rapport.")
         if not self.fini:
             if self.brouillon:
                 sortie.append(f"✍️ Réponses déjà données sur {self.code} :\n{self.brouillon}")
@@ -2431,6 +2874,10 @@ class Session:
             return self.sauver_projet(arg), None
         if nom in ("historique", "histo"):
             return [self.historique(arg)], None
+        if nom in ("etape", "aller") and arg.strip():
+            return self.aller_etape(arg)
+        if nom in ("modifier", "corriger"):
+            return self.modifier(arg), None
         if nom in ("guide", "etape", "question"):
             return self.invite_msgs() if not self.fini else [self.invite_etape()], None
         if nom == "reponse":
@@ -2443,12 +2890,12 @@ class Session:
             chemin = self.rapport(complet=arg.strip().lower() in ("complet", "c", "full"))
             return [f"📄 Rapport (état actuel) : {chemin.name}"], chemin
         if self.fini:
-            if nom == "retour":                            # rouvrir la dernière étape
+            if nom == "retour":                            # ré-ouvrir la dernière étape
                 self.fini = False
                 self.brouillon = self.reponses.pop(self.code, "")
-                return self.reouvrir_etape("↩️ Démarche rouverte.")
-            return [msg("Démarche terminée. /rapport complet, /retour pour ré-ouvrir la dernière étape, "
-                        "ou une nouvelle démarche.", BTN_FIN)], None
+                return self.reouvrir_etape("↩️ Démarche ré-ouverte.")
+            return [msg("Démarche terminée. /rapport complet, /etape <code> pour corriger une étape, "
+                        "/retour pour ré-ouvrir la dernière, ou une nouvelle démarche.", BTN_FIN)], None
         if nom == "sanscauses":
             if not (self.rca_actif() and self.rca_cfg()[2] == 1):
                 return ["« /sanscauses » passe l'analyse des causes (A3, PDCA, Kaizen), quand elle est en cours."], None
@@ -2456,6 +2903,8 @@ class Session:
             self.rca["ev"].append(["x"])
             self.noter("s", "Analyse des causes passée.")
             return self.rca_suite(A), None
+        if nom in ("sauter", "fin") and self.act_actif():
+            return self.act_commande(nom), None
         if nom in ("sauter", "fin") and self.rca_actif():
             return self.rca_commande(nom), None
         if nom in ("oui", "non") and self.rca_actif():
@@ -2476,6 +2925,8 @@ class Session:
                 return ["« /prec » concerne le mode guidé (/mode guide)."], None
             if self.rca_step() and self.qetat()["i"] >= self.rca_cfg()[1]:
                 return self.rca_prec(), None
+            if self.act_step() and self.qetat()["i"] <= 1 and (self.act["ev"] or self.qetat()["i"] == 0):
+                return self.act_prec(), None
             st = self.qetat()
             if st["i"] <= 0:
                 return ["Vous êtes déjà à la première question de l'étape."], None
@@ -2488,6 +2939,8 @@ class Session:
             self.qr[self.code] = {"i": 0, "r": {}, "rel": None}
             if self.rca_step():
                 self.rca = {"ev": []}
+            if self.methode == "8d" and self.code == "D6":
+                self.act = {"ev": [], "sig": []}
             self.noter("s", "Réponses de l'étape effacées.")
             self.save()
             return ["🧹 Réponses de l'étape effacées (l'historique de la conversation est conservé)."]\
@@ -2506,7 +2959,7 @@ class Session:
         return ["Commande inconnue. /aide pour la liste."], None
 
     def reouvrir_etape(self, titre):
-        """Étape déjà validée rouverte (/retour) : ses réponses sont réaffichées."""
+        """Étape déjà validée ré-ouverte (/retour) : ses réponses sont réaffichées."""
         if self.guide_actif():
             st = self.qetat()
             if not st["r"] and not st.get("c") and self.brouillon:   # étape saisie en mode libre
@@ -2526,6 +2979,12 @@ class Session:
         """Point d'entrée unique : retourne (liste_de_messages, fichier_ou_None).
         Un message est un str, ou un dict {texte, boutons, remplace} (voir msg())."""
         t = texte.strip()
+        if not t and self.methode and not self.attend_titre and self.rca_actif() \
+                and self.rca_etat()["ph"] in ("ish", "pq"):
+            t = "-"                                       # Entrée = « - » pendant l'analyse des causes
+        elif not t and self.methode and not self.attend_titre and self.act_actif() \
+                and self.act_etat()["ph"] == "act":
+            t = "-"                                       # Entrée = plus d'autre action
         if not t:
             return [], None
         if t.startswith("/"):
@@ -2537,12 +2996,14 @@ class Session:
             return [msg("Choisissez une méthode (ou ré-ouvrez un projet avec /projets) :",
                         BTN_DEMARRER)], None
         if self.fini:
-            return [msg("Démarche terminée. /rapport complet, /retour pour rouvrir la dernière "
-                        "étape, ou une nouvelle démarche.", BTN_FIN)], None
+            return [msg("Démarche terminée. /rapport complet, /etape <code> pour corriger une étape, "
+                        "/retour pour rouvrir la dernière, ou une nouvelle démarche.", BTN_FIN)], None
         guide = self.guide_actif()
         if t.lower() in OK_WORDS and not (guide and self.questions_restantes()):
             return self.valider()                          # en mode guidé « oui » reste une réponse
         if guide and self.questions_restantes() and t.lower().strip(" .!") in ACQUIT:
+            if self.act_actif():
+                return [self.act_prompt()], None
             if self.rca_actif():
                 if self.rca_etat()["ph"] != "ish":          # (en Ishikawa, « ok » termine le facteur)
                     return [self.rca_prompt()], None
@@ -2737,10 +3198,11 @@ def afficher(texte):
 def boucle_cli():
     charger_historique_saisie()
     s = Session("cli")
+    invite_ligne = None
     afficher(rendre_cli(aide_tableau(court=True)))
     moteur = s.backend
     modele = s.modele("texte")
-    ligne_moteur = f"🤖 Moteur : {moteur} · {modele} - mode {s.mode}"
+    ligne_moteur = f"🤖 Moteur : {moteur} - {modele} - mode {s.mode}"
     print("\n" + teinte(C_JAUNE, ligne_moteur))
     if moteur == "ollama":
         print(rendre_cli("⚠️ Moteur local (Ollama) : plus lent. /modele b groq pour repasser sur Groq."))
@@ -2748,14 +3210,22 @@ def boucle_cli():
         print(rendre_cli("⚠️ Clé Groq introuvable (GROQ_API_KEY ou ~/Projects/Groq_agent/.groq_config)."))
     if s.methode:
         print(rendre_cli(f"📂 Projet en cours rechargé : « {s.titre} » — /etat, /historique ou /projets\n"))
-        for m in s.reprise_msgs():                      # on repose la question en attente
-            afficher(rendre_cli(texte_de(m)))
-            print()
+        reprise = s.reprise_msgs()                      # on repose la question en attente
+        for m in reprise:
+            t = rendre_cli(texte_de(m))
+            if m is reprise[-1] and isinstance(m, dict) and m.get("ligne"):
+                tete, _, fin = t.rpartition("\n")
+                if tete:
+                    afficher(tete)
+                invite_ligne = re.sub(r"(\x1b\[[0-9;]*m)", "\001\\1\002", fin) + " "
+            else:
+                afficher(t)
+                print()
     else:
         print(rendre_cli("Aucun projet en cours — /8d, /a3, /pdca, /k6pts ou /projets\n"))
     while True:
         try:
-            texte = input(invite_saisie())
+            texte = input(invite_ligne or invite_saisie())
         except (EOFError, KeyboardInterrupt):
             print()
             break
@@ -2774,12 +3244,23 @@ def boucle_cli():
         duree = time.time() - debut
         if attente:
             sys.stdout.write("\r\033[2K" if COULEUR_ACTIVE else "\r")
+        dernier = msgs[-1] if msgs else None
+        en_ligne = isinstance(dernier, dict) and dernier.get("ligne")
+        invite_ligne = None
         for m in msgs:
             print()
-            afficher(rendre_cli(texte_de(m)))
+            t = rendre_cli(texte_de(m))
+            if m is dernier and en_ligne:                  # la réponse se tape après la dernière ligne
+                tete, _, fin = t.rpartition("\n")
+                if tete:
+                    afficher(tete)
+                invite_ligne = re.sub(r"(\x1b\[[0-9;]*m)", "\001\\1\002", fin) + " "
+            else:
+                afficher(t)
         if duree >= 1.0 and s.dernier_modele:
             print(teinte(C_GRIS, f"   ⏱ {duree:.1f} s · {s.backend} · {s.dernier_modele}"))
-        print()
+        if invite_ligne is None:
+            print()
         s.dernier_modele = ""
         if fichier:
             print(f"(fichier : {fichier})")
