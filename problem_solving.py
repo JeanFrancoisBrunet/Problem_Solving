@@ -55,6 +55,7 @@ import sys
 import json
 import time
 import base64
+import unicodedata
 import shlex
 import argparse
 import configparser
@@ -439,17 +440,17 @@ def Q(libelle, question, exemple=""):
 # QQOQCCP_GENERAL : même structure, vocabulaire plus large (défaut OU problématique), pour l'A3 et le Kaizen.
 QQOQCCP = [
     Q("QUOI (Est)", "Quel est précisément le défaut ou le dysfonctionnement ? Qu'est-ce qui est "
-      "touché (produit, pièce, machine, processus) ?"),
+      "impacté (produit, pièce, machine, processus) ?"),
     Q("QUOI (N'est pas)", "Qu'est-ce qui pourrait être touché mais ne l'est pas "
       "(autres défauts, autres produits ou éléments, ce qui est conforme) ? « - » s'il n'y a rien à exclure."),
-    Q("QUI (Est)", "Qui a détecté le problème ? Qui est concerné (poste, équipe, client) ?"),
+    Q("QUI (Est)", "Qui a détecté le problème ? Qui est concerné (poste de travail, équipe, client) ?"),
     Q("QUI (N'est pas)", "Qui pourrait être concerné mais ne l'est pas (autres postes, "
-      "équipes, clients) ? « - » s'il n'y a rien à exclure."),
+      "équipes, clients internes/externes) ? « - » s'il n'y a rien à exclure."),
     Q("OÙ (Est)", "À quel endroit apparaît-il (site, ligne, machine, poste), et où est-il détecté ? "
-      "Où est-il visible sur la pièce ?"),
+      "Où est-il visible sur le produit ?"),
     Q("OÙ (N'est pas)", "Où pourrait-il apparaître mais n'apparaît pas (autres sites, "
       "lignes, machines, postes, autres zones de la pièce) ? « - » s'il n'y a rien à exclure."),
-    Q("QUAND (Est)", "Quand est-il apparu la première fois, depuis quand, à quelle fréquence ? "
+    Q("QUAND (Est)", "Quand est-il apparu la 1ère fois, depuis quand, à quelle fréquence ? "
       "Un moment particulier (équipe, changement de lot, démarrage) ?"),
     Q("QUAND (N'est pas)", "Quand n'apparaît-il pas (périodes, équipes, lots ou "
       "moments sans le problème) ? « - » s'il n'y a rien à exclure."),
@@ -734,6 +735,8 @@ AIDE_SECTIONS = [
         ("phrase avec ?", "Pose une question au coach (la question en cours reste posée)", ""),
         ("photo", "Envoyez une photo (légende = question) : analysée, jointe au rapport", "tg"),
         ("/photo <chemin> [légende]", "Analyse une image, jointe au rapport", "cli"),
+        ("/photo retirer [n|tout]", "Retire une photo du rapport (sans modifier les réponses)", ""),
+        ("/restaurer", "Rétablit l'étape effacée (reconstruite d'après l'historique)", ""),
         ("/ok    ou    ok", "Valide l'étape", ""),
         ("/passer     /retour", "Passe l'étape / Revient à l'étape précédente", ""),
         ("/etape <code|n>", "Ré-ouvre une étape déjà atteinte (même terminée), /ok revalide", ""),
@@ -845,6 +848,8 @@ BTN_ETAPE = [[("📊 État", "/etat"), ("📜 Historique", "/historique")],
              [("↩️ Retour", "/retour"), ("⏭️ Passer", "/passer")],
              [("💾 Sauver", "/sauver"), ("✏️ Titre", "/titre"), ("🤖 Modèle", "/modele")]]
 BTN_RETOUR_COACH = [[("✅ Valider l'étape", "/ok"), ("🧾 Ma réponse", "/reponse")]]
+BTN_PHOTO = [[("✅ Valider l'étape", "/ok"), ("🧾 Ma réponse", "/reponse")],
+             [("🗑 Retirer cette photo du rapport", "/photo retirer")]]
 BTN_QUESTION = [[("⏭️ Sauter", "/sauter"), ("↩️ Précédente", "/prec")],
                 [("🧾 Mes réponses", "/reponse"), ("📊 État", "/etat")]]
 BTN_FIN_QUESTIONS = [[("✅ Valider l'étape", "/ok"), ("🧾 Mes réponses", "/reponse")],
@@ -1077,7 +1082,7 @@ def libelle_modele(backend, usage, modele):
 # Session : utilisateur + projet actif
 # ----------------------------------------------------------------------------
 CHAMPS_PROJET = ("methode", "titre", "titre_propose", "idx", "reponses", "photos", "fil", "qr",
-                 "brouillon", "fini", "debut", "maj", "rca", "act", "cible")
+                 "brouillon", "fini", "debut", "maj", "rca", "act", "cible", "corbeille")
 MODES = {"guide": "guidé : une question à la fois, avec relance IA si la réponse est floue",
          "rapide": "rapide : une question à la fois, sans appel IA (idéal avec un modèle local lent)",
          "libre": "libre : vous écrivez la réponse de l'étape, le coach commente"}
@@ -1310,6 +1315,126 @@ def rca_journal(ev, ndim):
         out.append((i, lib, e[1]))
     return out
 
+RE_FIL_CAUSE = re.compile(r"^\[Cause ([ON]\d+\.\d+)\]\s*(.*)$", re.S)
+RE_FIL_FTA = re.compile(r"^\[FTA ([ON]\d+\.\d+) · [^\]]+\]\s*(oui|non)\b[\s,.:;!\-—]*(.*)$", re.S | re.I)
+RE_FIL_POURQUOI = re.compile(r"^\[Pourquoi ([\d.]+) · ([ON]\d+\.\d+)\]\s*(.*)$", re.S)
+RE_FIL_CORRECTION = re.compile(r"^\[Correction · ((?:Cause|Pourquoi) [^\]]+)\]\s*(.*)$", re.S)
+
+def rca_cle_suivante(S):
+    """Clé que créerait la prochaine réponse de l'arbre des pourquoi (état S de rca_calcul)."""
+    cid = S["prouvees"][S["pi"]]
+    T = S["arbre"].get(cid, {"n": {}, "f": []})
+    parent = S["cur"] if S["mode"] == "why" else S["cur"][:-1]
+    return cid, parent + (1 + len(rca_enfants(T, parent)),)
+
+RE_FIL_ACT = re.compile(r"^\[(Nature|Action|Pilote|Délai) ([^\]]+)\]\s*(.*)$", re.S)
+RE_FIL_ACT_CORR = re.compile(r"^\[Correction · ((?:Nature|Action|Pilote|Délai) [\d.]+)\]\s*(.*)$", re.S)
+# (l'étiquette entre crochets est lue telle quelle : anciennes versions « O1.1 › 1.1 » ou « 1.1 » comprises)
+
+def act_depuis_historique(fil, n):
+    """Reconstruit le journal du plan d'actions D6 d'après l'historique de l'étape (n = nb de causes racines).
+    Retourne (journal, corrections appliquées)."""
+    deb = 0
+    for i, x in enumerate(fil):
+        if x["r"] == "s" and x["t"].startswith("Réponses de l'étape effacées"):
+            deb = i + 1
+    ev, corr = [], []
+    cle = {"Nature": "n", "Action": "a", "Pilote": "p", "Délai": "d"}
+    dernier = ""
+    for x in fil[deb:]:
+        t = x["t"].strip()
+        if x["r"] == "u":
+            m = RE_FIL_ACT_CORR.match(t)
+            if m:
+                corr.append((m.group(1), m.group(2).strip()))
+                continue
+            m = RE_FIL_ACT.match(t)
+            if not m:
+                continue
+            k = cle[m.group(1)]
+            dernier = m.group(2).strip()
+            A = act_calcul(ev, n)
+            if k == "n" and A["ph"] == "act" and A["acts"].get(A["ci"]):
+                ev.append(["z"])                      # la cause précédente est terminée
+            ev.append([k, m.group(3).strip()])
+        elif x["r"] == "s":
+            if t == "Dernière saisie annulée." and ev:
+                ev.pop()
+            elif t in ("Pilote à définir.", "Délai à définir."):
+                ev.append(["p" if t.startswith("Pilote") else "d", ""])
+            elif re.match(r"^Cause racine .* passée\.$", t):
+                A = act_calcul(ev, n)
+                lib = t[len("Cause racine "):-len(" passée.")].strip()
+                if A["ph"] == "act" and A["acts"].get(A["ci"]):
+                    ev.append(["z"])                      # la cause en cours se termine
+                    if lib != dernier:                    # et la suivante est passée
+                        ev.append(["s"])
+                else:
+                    ev.append(["s"])
+    A = act_calcul(ev, n)
+    if A["ph"] == "act" and A["acts"].get(A["ci"]) and A["ci"] == n - 1:
+        ev.append(["z"])
+    appl = []
+    for lib, texte in corr:
+        for i, l, ancien in act_journal(ev, n):
+            if l == lib:
+                ev[i][1] = texte
+                appl.append(f"{lib} : « {coupe(ancien, 60)} » → « {coupe(texte, 60)} »")
+    return ev, appl
+
+def rca_depuis_historique(fil, ndim=2):
+    """Reconstruit le journal de l'analyse des causes à partir de l'historique conservé de l'étape
+    (messages « [Cause O1.1] … », « [FTA …] », « [Pourquoi 1.1 · O1.1] … » et notes). Le numéro inscrit
+    dans chaque « Pourquoi » sert de référence : si la reconstruction ne donne pas ce numéro, les dernières
+    saisies, annulées à l'époque sans trace, sont écartées. S'arrête avant le dernier /effacer."""
+    marques = [i for i, x in enumerate(fil) if x["r"] == "s" and x["t"].startswith("Réponses de l'étape effacées")]
+    seg = fil[(marques[-2] + 1 if len(marques) > 1 else 0):marques[-1]] if marques else fil
+    ev, corr = [], []
+    for x in seg:
+        t, r = x["t"].strip(), x["r"]
+        if r == "u":
+            if (m := RE_FIL_CAUSE.match(t)):
+                ev.append(["c", m.group(2).strip()])
+            elif (m := RE_FIL_FTA.match(t)):
+                ev.append(["f", m.group(2).lower(), m.group(3).strip()])
+            elif (m := RE_FIL_POURQUOI.match(t)):
+                cle = tuple(int(i) for i in m.group(1).split("."))
+                essai = [list(e) for e in ev]
+                while True:
+                    S = rca_calcul(essai, ndim)
+                    if S["ph"] == "pq" and S["pi"] < len(S["prouvees"]) and rca_cle_suivante(S) == (m.group(2), cle):
+                        ev = essai
+                        break
+                    if not essai or essai[-1][0] not in ("p", "pf", "pn"):
+                        break
+                    essai.pop()
+                ev.append(["p", m.group(3).strip()])
+            elif (m := RE_FIL_CORRECTION.match(t)):
+                corr.append((m.group(1).strip(), m.group(2).strip()))
+        elif r == "s":
+            if t.startswith("Facteur ") and t.endswith("terminé."):
+                ev.append(["m"])
+            elif re.match(r"Cause [ON]\d+\.\d+ non évaluée", t):
+                ev.append(["fs"])
+            elif t.startswith("Cause racine de "):
+                ev.append(["pe"] if re.match(r"Cause racine de [ON]\d+\.\d+ :", t) else ["pf"])
+            elif t.startswith("Pas d'autre réponse"):
+                ev.append(["pn"])
+            elif t.startswith("Analyse des causes passée"):
+                ev.append(["x"])
+            elif t == "Dernière saisie annulée." and ev:
+                ev.pop()
+            elif t.startswith("Correction annulée") and corr:
+                corr.pop()
+    journal = rca_journal(ev, ndim)
+    appliquees = []
+    for lib, texte in corr:
+        for i, l, ancien in journal:
+            if l == lib:
+                ev[i][1] = texte
+                appliquees.append(f"{lib} : « {coupe(ancien, 60)} » → « {coupe(texte, 60)} »")
+    return ev, appliquees
+
 def act_journal(ev, n):
     """Saisies du plan d'actions, modifiables : nature, action, pilote, délai."""
     out = []
@@ -1417,6 +1542,7 @@ class Session:
         self.rca = {"ev": []}     # D5 : journal des saisies (causes Ishikawa, réponses FTA, pourquoi)
         self.act = {"ev": [], "sig": []}   # D6 : journal du plan d'actions (nature, actions, pilote, délai)
         self.fini = False
+        self.corbeille = {}       # code d'étape -> copie de l'étape avant /effacer (pour /restaurer)
         self.cible = None         # n° d'étape où revenir après la correction d'une étape antérieure (/etape)
         self.debut = ""
         self.maj = ""
@@ -2341,9 +2467,30 @@ class Session:
                     L.append("Questions (/modifier Q<n> <texte>) :")
                 L += [f"  {pref}{n}  {lib} : {coupe(rep.replace(chr(10), ' / '), 100) or '(sans réponse)'}"
                       for n, lib, rep in quest]
-            L.append("« - » comme texte efface une réponse. Structure de l'analyse (ajouter, supprimer) : /prec.")
+            if saisies:
+                L.append("Par numéro ou par référence : /modifier 4 <texte>  ·  /modifier O1.4 <texte>  ·  "
+                         "/modifier action 3.1 <texte>")
+            L.append("« - » comme texte efface une réponse. Ajouter / supprimer une saisie : /prec. "
+                     "Revenir sur la dernière correction : /modifier annuler.")
             return msg("\n".join(L), btn)
         a = arg.strip()
+        if a.lower() in ("annuler", "undo"):
+            return [self.annuler_correction()]
+
+        def norm(x):
+            x = unicodedata.normalize("NFD", x.lower())
+            return re.sub(r"[\s\u0300-\u036f]|^(cause|pourquoi)", "", x)
+        # référence par étiquette : O1.4 · O1.1 - 1.2 · action 3.1 · pilote 3.1 · délai 3.1 · nature 3
+        if saisies and not re.match(r"^q?\s*\d+(\s|$)", a, re.I):
+            r1 = re.match(r"^([on]\d+\.\d+(?:\s*-\s*\d+(?:\.\d+)*)?)\s*(.*)$", a, re.I | re.S)
+            r2 = re.match(r"^(action|pilote|d[ée]lai|nature)\s*(\d+(?:\.\d+)?)\s*(.*)$", a, re.I | re.S)
+            cle, texte_ref = (norm(r1.group(1)), r1.group(2).strip()) if r1 else \
+                             (norm(r2.group(1) + r2.group(2)), r2.group(3).strip()) if r2 else (None, "")
+            if cle:
+                trouve = [k for k, (_, lib, _) in enumerate(saisies, 1) if norm(lib) == cle]
+                if not trouve:
+                    return [f"Référence inconnue : {a.split()[0]}.", liste()]
+                a = f"{trouve[0]} {texte_ref}".strip()
         m = re.match(r"^(q)?\s*(\d+)\s*(.*)$", a, re.I | re.S) if a else None
         if not m:
             return [liste()]
@@ -2356,6 +2503,7 @@ class Session:
             if not texte:
                 return [f"Question {n} — {lib} : {st['r'].get(str(n - 1)) or '(sans réponse)'}\n"
                         f"Pour la corriger : /modifier {pref}{n} <nouvelle réponse>"]
+            self._correction = {"genre": "q", "code": self.code, "n": n - 1, "ancien": st["r"].get(str(n - 1))}
             if texte == "-":
                 st["r"].pop(str(n - 1), None)
             else:
@@ -2363,7 +2511,7 @@ class Session:
             self.noter("u", f"[Correction · {lib}] {texte}")
             self.synchroniser()
             self.save()
-            return [f"✏️ « {lib} » corrigée.", self.question_msg()]
+            return [f"✏️ « {lib} » corrigée (/modifier annuler pour revenir en arrière).", self.question_msg()]
         if not 1 <= n <= len(saisies):
             return ["Numéro de saisie inconnu.", liste()]
         i, lib, ancien = saisies[n - 1]
@@ -2379,13 +2527,107 @@ class Session:
                 texte = ""
             else:
                 return ["Cette saisie ne peut pas être vide (pour la retirer : /prec)."]
+        self._correction = {"genre": genre, "code": self.code, "i": i, "ancien": ancien, "lib": lib}
         (self.rca if genre == "rca" else self.act)["ev"][i][1] = texte
         if genre == "rca":
             self.rca_sync(self.rca_etat())
         else:
             self.act_sync(self.act_etat())
         self.noter("u", f"[Correction · {lib}] {texte}")
-        return [f"✏️ {lib} corrigé : « {coupe(ancien, 80)} » → « {coupe(texte, 80)} ».", self.question_msg()]
+        return [f"✏️ {lib} corrigé : « {coupe(ancien, 80)} » → « {coupe(texte, 80)} » "
+                "(/modifier annuler pour revenir en arrière).", self.question_msg()]
+
+    def restaurer(self, arg=""):
+        """/restaurer : rétablit l'étape en cours telle qu'elle était avant /effacer ; à défaut de copie, et
+        pour une étape d'analyse des causes, la reconstruit d'après l'historique de l'étape."""
+        if self.fini or not self.guide_actif():
+            return ["« /restaurer » rétablit l'étape en cours (mode guidé) ; pour une démarche terminée, "
+                    "rouvrez d'abord l'étape : /etape <code>."]
+        code = self.code
+        confirme = arg.strip().lower() in ("oui", "confirmer", "force")
+        courant = len(self.rca["ev"]) if self.rca_step() else len(self.act["ev"]) if self.act_step() else \
+            sum(1 for v in (self.qetat().get("r") or {}).values() if (v or "").strip())
+        c = self.corbeille.get(code)
+        if c is None and not self.rca_step() and not self.act_step():
+            return [f"Rien à restaurer sur l'étape {code} (aucune copie avant effacement)."]
+        if courant and not confirme:
+            return [msg(f"⚠️ L'étape {code} contient déjà {courant} saisies ; /restaurer les remplace par la version "
+                        "d'avant l'effacement. Continuer ?",
+                        [[("♻️ Oui, restaurer", "/restaurer oui"), ("↩️ Non, garder", "/guide")]])]
+        if c is not None:
+            if c.get("qr") is not None:
+                self.qr[code] = c["qr"]
+            if c.get("rca") is not None:
+                self.rca = c["rca"]
+            if c.get("act") is not None:
+                self.act = c["act"]
+            self.corbeille.pop(code, None)
+            origine = f"copie du {c.get('date', '?')}"
+        elif self.act_step():
+            causes = self.act_causes()
+            ev, corrections = act_depuis_historique(self.fil.get(code, []), len(causes))
+            if not ev:
+                return ["Rien à reconstruire : l'historique de D6 ne contient aucune saisie du plan d'actions."]
+            self.act = {"ev": ev, "sig": [x["label"] for x in causes]}
+            B = self.act_etat()
+            st = self.qetat()
+            i = 0
+            if B["ph"] == "fin":
+                i = 1
+                while i < len(self.questions()) and str(i) in st["r"]:   # questions suivantes déjà répondues
+                    i += 1
+            st["i"] = i
+            self.act_sync(B)
+            origine = "reconstruit d'après l'historique"
+        else:
+            ev, corrections = rca_depuis_historique(self.fil.get(code, []), self.rca_cfg()[2])
+            if not ev:
+                return ["Rien à reconstruire : l'historique de cette étape ne contient aucune saisie d'analyse."]
+            self.rca = {"ev": ev}
+            B = self.rca_etat()
+            st = self.qetat()
+            st["i"] = self.rca_cfg()[1] + (1 if B["ph"] == "fin" else 0)
+            self.rca_sync(B)
+            origine = "reconstruite d'après l'historique"
+        self.synchroniser()
+        self.noter("s", f"Étape {code} restaurée ({origine}).")
+        self.save()
+        sortie = [f"♻️ Étape {code} restaurée ({origine})."]
+        if self.rca_step():
+            sortie.append(rca_resume(self.rca_etat(), self.rca_cfg()[2]))
+            if c is None and corrections:
+                sortie.append("Corrections reprises de l'historique (à vérifier, /modifier pour les changer) :\n"
+                              + "\n".join("• " + x for x in corrections))
+            sortie.append("Relisez-la : /modifier pour corriger une saisie, /ok pour revalider.")
+        if self.act_step():
+            sortie.append(act_resume(self.act_etat(), self.act_causes()))
+            if c is None and corrections:
+                sortie.append("Corrections reprises de l'historique (à vérifier, /modifier pour les changer) :\n"
+                              + "\n".join("• " + x for x in corrections))
+            sortie.append("Relisez-le : /modifier pour corriger une saisie, /ok pour valider.")
+        return sortie + [self.question_msg()]
+
+    def annuler_correction(self):
+        c = getattr(self, "_correction", None)
+        if not c or c["code"] != self.code:
+            return "Aucune correction à annuler sur cette étape."
+        self._correction = None
+        if c["genre"] == "q":
+            st = self.qetat()
+            if c["ancien"] is None:
+                st["r"].pop(str(c["n"]), None)
+            else:
+                st["r"][str(c["n"])] = c["ancien"]
+            self.synchroniser()
+            self.save()
+            return "↩️ Correction annulée (ancienne réponse rétablie)."
+        (self.rca if c["genre"] == "rca" else self.act)["ev"][c["i"]][1] = c["ancien"]
+        if c["genre"] == "rca":
+            self.rca_sync(self.rca_etat())
+        else:
+            self.act_sync(self.act_etat())
+        self.noter("s", f"Correction annulée : {c['lib']}.")
+        return f"↩️ Correction annulée : {c['lib']} = « {coupe(c['ancien'], 80)} »."
 
     def coach_question(self, question):
         prompt = (self.entete() + self.fil_pour_llm() +
@@ -2418,6 +2660,10 @@ class Session:
     # -- photos ----------------------------------------------------------------
     def analyser_image(self, donnees, legende=""):
         """Analyse une photo au regard de l'étape en cours. Retourne la liste des messages."""
+        if self.methode and self.fini:
+            return ["📷 La démarche est terminée : une photo analysée maintenant ne serait rattachée à aucune étape "
+                    "et ne figurerait pas dans le rapport. Rouvrez d'abord l'étape concernée (/etape D1, /etape 3…), "
+                    "envoyez la photo, puis /ok pour revalider et régénérer le rapport."]
         try:
             image = preparer_image(donnees)
         except Exception as e:
@@ -2453,8 +2699,9 @@ class Session:
             self.noter("p", (f"[{legende}] " if legende else "") + texte)
             self.save()
             return [f"📷 Analyse de la photo (étape {code}) :\n{texte}",
-                    msg("💾 Analyse enregistrée avec l'étape (elle figurera dans le rapport). "
-                        "Ajoutez vos propres constats, puis validez.", BTN_RETOUR_COACH)]
+                    msg("💾 Analyse enregistrée à l'étape (et intégrée au rapport ; "
+                        "/photo retirer pour ne pas la verser). Ajoutez vos constats, puis validez.",
+                        BTN_PHOTO)]
         return [f"📷 Analyse de la photo :\n{texte}",
                 msg("Pour structurer la démarche :", BTN_DEMARRER[:2])]
 
@@ -2597,7 +2844,10 @@ class Session:
             n = len(self.questions())
             out.append(f"\n❓ Question {min(self.qetat()['i'] + 1, n)}/{n} de l'étape {self.code} "
                        f"· mode {self.mode}")
-        if self.brouillon and not self.fini:
+        if self.guide_actif() and not self.fini and self.qetat()["i"] >= len(self.questions()):
+            cible = f" et reviendra à l'étape {self.cible}" if getattr(self, "cible", None) else ""
+            out.append(f"✅ Toutes les questions de {self.code} sont traitées : /ok valide l'étape{cible}.")
+        elif self.brouillon and not self.fini:
             out.append(f"✍️ Réponse en cours ({len(self.brouillon)} caractères) — /reponse pour la relire")
         return msg("\n".join(out), BTN_ETAPE if not self.fini else BTN_FIN)
 
@@ -2819,18 +3069,88 @@ class Session:
         return self.menu_modeles(f"✅ Mode {valeur} : {MODES[valeur]}")
 
     # -- commandes -----------------------------------------------------------------
+    @staticmethod
+    def resoudre_image(arg):
+        """Sépare « chemin [légende] ». Le chemin peut contenir des espaces, des parenthèses, des accents,
+        être entre guillemets, ou avoir des « \\ » (espace protégé « \\  » ou « \\ » tapé à la place de « / »).
+        Retourne (Path ou None, légende, premier chemin essayé)."""
+        import unicodedata
+        arg = arg.strip()
+        if not arg:
+            return None, "", ""
+        if arg[0] in "\"'":                                  # chemin entre guillemets
+            fin = arg.find(arg[0], 1)
+            if fin > 0:
+                arg = arg[1:fin] + "\0" + arg[fin + 1:]       # \0 sépare le chemin de la légende
+        mots = arg.replace("\0", " \0 ").split(" ")
+        essai = ""
+        for k in range(len(mots), 0, -1):                 # le plus long préfixe qui désigne une image
+            brut = " ".join(mots[:k]).replace(" \0 ", " ").replace("\0", "").strip()
+            variantes = [brut, brut.replace("\\ ", " "), brut.replace("\\", "/"), brut.replace("\\", "")]
+            for v in variantes:
+                for forme in ("NFC", "NFD"):
+                    c = Path(unicodedata.normalize(forme, v)).expanduser()
+                    essai = essai or str(c)
+                    if c.suffix.lower() in IMAGE_EXT and c.is_file():
+                        reste = " ".join(mots[k:]).replace("\0", "").strip()
+                        return c, reste, essai
+        for k in range(len(mots), 0, -1):                 # pour le message d'erreur : jusqu'au mot « *.jpg »
+            if mots[k - 1].lower().endswith(tuple(IMAGE_EXT)):
+                essai = " ".join(mots[:k]).replace("\0", "").strip().replace("\\ ", " ").replace("\\", "/")
+                break
+        return None, "", essai
+
+    def retirer_photo(self, arg):
+        """/photo retirer [n|tout] : retire une analyse de photo de l'étape (la dernière par défaut) ;
+        le reste de l'étape n'est pas touché."""
+        if not self.methode:
+            return ["Aucune démarche en cours."]
+        code = self.code
+        L = self.photos.get(code) or []
+        if not L:
+            return [f"Aucune photo sur l'étape {code}."]
+        a = arg.strip().lower()
+        if a in ("tout", "toutes", "all"):
+            sel = list(range(len(L)))
+        elif not a:
+            sel = [len(L) - 1]
+        elif a.isdigit() and 1 <= int(a) <= len(L):
+            sel = [int(a) - 1]
+        else:
+            lignes = [f"  {k}  {p.get('date', '')} {p.get('legende') or '(sans légende)'}" for k, p in enumerate(L, 1)]
+            return ["Photos de l'étape " + code + " :\n" + "\n".join(lignes) +
+                    "\n/photo retirer <n> · /photo retirer tout · /photo retirer (la dernière)"]
+        fil = self.fil.get(code) or []
+        pos = [i for i, x in enumerate(fil) if x["r"] == "p"]
+        for k in sorted(sel, reverse=True):
+            if len(pos) == len(L):                           # même ordre : on retire aussi l'échange conservé
+                del fil[pos[k]]
+                pos.pop(k)
+            del L[k]
+        if not L:
+            self.photos.pop(code, None)
+        self.noter("s", f"Photo retirée de l'étape {code}.")
+        self.save()
+        reste = len(self.photos.get(code) or [])
+        return [msg(f"🗑 {len(sel)} photo{'s' if len(sel) > 1 else ''} retirée{'s' if len(sel) > 1 else ''} "
+                    f"de l'étape {code} (rapport et historique) — vos réponses sont conservées."
+                    + (f" {reste} photo{'s' if reste > 1 else ''} restante{'s' if reste > 1 else ''}." if reste else ""),
+                    BTN_RETOUR_COACH if self.guide_actif() else None)]
+
     def photo_locale(self, arg):
         """/photo <chemin> [légende] — terminal uniquement."""
-        try:
-            parts = shlex.split(arg)
-        except ValueError:
-            parts = arg.split()
-        if not parts:
+        if not arg.strip():
             return ["Usage : /photo <chemin_image> [légende]"]
-        chemin = Path(parts[0]).expanduser()
-        if chemin.suffix.lower() not in IMAGE_EXT or not chemin.is_file():
-            return [f"Image introuvable ou format non géré : {chemin}"]
-        return self.analyser_image(chemin.read_bytes(), " ".join(parts[1:]))
+        chemin, legende, essai = self.resoudre_image(arg)
+        if chemin is None:
+            dossier = Path(essai).expanduser().parent
+            msg_ = f"Image introuvable ou format non géré : {essai}"
+            if dossier.is_dir():
+                images = sorted(x.name for x in dossier.iterdir() if x.suffix.lower() in IMAGE_EXT)[:8]
+                if images:
+                    msg_ += f"\nImages présentes dans {dossier} : " + " · ".join(images)
+            return [msg_ + "\n(les espaces et parenthèses sont acceptés ; guillemets facultatifs)"]
+        return self.analyser_image(chemin.read_bytes(), legende)
 
     def commande(self, cmd, arg, cli=False):
         nom = cmd[1:]
@@ -2846,6 +3166,9 @@ class Session:
         cle = ALIAS_METHODES.get(nom, nom)
         if cle in METHODES:
             return self.demarrer(cle, arg), None
+        if nom == "photo" and arg.split()[:1] and arg.split()[0].lower() in ("retirer", "supprimer", "enlever",
+                                                                           "annuler", "effacer"):
+            return self.retirer_photo(" ".join(arg.split()[1:])), None
         if nom == "photo":
             if cli:
                 return self.photo_locale(arg), None
@@ -2878,6 +3201,8 @@ class Session:
             return self.aller_etape(arg)
         if nom in ("modifier", "corriger"):
             return self.modifier(arg), None
+        if nom == "restaurer":
+            return self.restaurer(arg), None
         if nom in ("guide", "etape", "question"):
             return self.invite_msgs() if not self.fini else [self.invite_etape()], None
         if nom == "reponse":
@@ -2935,6 +3260,23 @@ class Session:
             self.save()
             return [self.question_msg()], None
         if nom == "effacer":
+            nb = len(self.rca["ev"]) if self.rca_step() else len(self.act["ev"]) if self.act_step() else 0
+            reponses_ici = sum(1 for v in (self.qetat().get("r") or {}).values() if (v or "").strip())
+            suivantes = [e["code"] for e in self.etapes[self.idx + 1:]
+                         if e["code"] in self.reponses or (self.qr.get(e["code"]) or {}).get("r")]
+            if (nb or (reponses_ici and suivantes)) and arg.strip().lower() not in ("oui", "confirmer", "force"):
+                texte = f"⚠️ /effacer supprime TOUTE l'étape {self.code}"
+                texte += f", dont l'analyse déjà saisie ({nb} saisies). " if nb else f" ({reponses_ici} réponses). "
+                if suivantes:
+                    texte += (f"Les étapes suivantes ({', '.join(suivantes)}) s'appuient sur celle-ci et resteront "
+                              "inchangées. ")
+                texte += ("Pour retirer seulement une photo : /photo retirer ; corriger une saisie : /modifier ; "
+                          "annuler la dernière : /prec. Une copie est gardée : /restaurer la rétablit. Tout effacer ?")
+                return [msg(texte, [[("🧹 Oui, tout effacer", "/effacer oui"), ("↩️ Non, garder", "/guide")]])], None
+            self.corbeille[self.code] = json.loads(json.dumps({
+                "qr": self.qr.get(self.code), "rca": self.rca if self.rca_step() else None,
+                "act": self.act if self.methode == "8d" and self.code == "D6" else None,
+                "date": datetime.now().strftime("%d/%m/%Y %H:%M")}))
             self.brouillon = ""
             self.qr[self.code] = {"i": 0, "r": {}, "rel": None}
             if self.rca_step():
@@ -2943,7 +3285,7 @@ class Session:
                 self.act = {"ev": [], "sig": []}
             self.noter("s", "Réponses de l'étape effacées.")
             self.save()
-            return ["🧹 Réponses de l'étape effacées (l'historique de la conversation est conservé)."]\
+            return ["🧹 Réponses de l'étape effacées (l'historique est conservé ; /restaurer les rétablit)."]\
                 + (self.invite_msgs()[1:] if self.guide_actif() else []), None
         if nom == "passer":
             self.reponses[self.code] = ""

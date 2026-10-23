@@ -96,12 +96,22 @@ Si l'analyse de D5 a été faite, la première question de **D6** reprend **chaq
 Rien n'est figé, ni en cours de démarche, ni une fois la démarche terminée (et son rapport généré).
 
 1. **Rouvrir l'étape à corriger** : `/etape D5` (ou son numéro ; le code est celui de `/etat` : D1…D8, 1…8 en A3, P/D/C/A en PDCA, K1…K6 en Kaizen). L'étape est rouverte avec ses réponses ; **toutes les autres étapes sont conservées**. Fonctionne aussi après `/charger <n>` sur un projet terminé.
-2. **Corriger une saisie précise** : `/modifier` liste les saisies de l'étape, numérotées ; `/modifier <n> <nouveau texte>` remplace la saisie n.
+2. **Corriger une saisie précise** : `/modifier` liste les saisies de l'étape. On désigne la saisie **par son numéro** (`/modifier 4 <texte>`) **ou par sa référence** (`/modifier O1.4 <texte>`, `/modifier O1.1 - 1.2 <texte>`, `/modifier action 3.1 <texte>`, `pilote 3.1`, `délai 3.1`, `nature 3`). **`/modifier annuler`** rétablit l'ancienne valeur de la dernière correction.
    - **Analyse des causes (D5, A3, PDCA, Kaizen)** : les causes Ishikawa et chaque réponse de l'arbre des pourquoi sont listées (« Cause O1.1 », « Pourquoi O1.1 - 1.2 »…) ; la structure de l'arbre et la numérotation sont conservées.
    - **Plan d'actions (D6)** : nature, action, pilote et délai de chaque action (« Action 3.1 », « Pilote 3.1 », « Délai 3.1 »). `-` comme texte laisse un pilote ou un délai « à définir ».
    - **Questions de l'étape** : `/modifier Q2 <réponse>` (ou `/modifier 2 <réponse>` hors analyse) ; `-` comme texte efface la réponse.
    - Fonctionne **aussi pendant l'analyse**, sans repasser par `/prec`. `/prec` reste l'outil pour **ajouter ou retirer** une saisie (changer la structure de l'analyse).
 3. **Revalider** : `/ok` revalide l'étape et **revient directement à l'étape où vous en étiez** (les étapes intermédiaires ne sont pas à reparcourir). Le plan d'actions D6 reprend automatiquement les textes corrigés de D5 ; si les causes racines elles-mêmes changent (une de plus ou de moins), le plan D6 est à refaire. Sur une démarche terminée, la revalidation de la dernière étape **régénère le rapport** (nouveau fichier horodaté).
+
+### Effacer sans rien perdre : `/restaurer`
+
+`/effacer` recommence une étape, mais ne détruit plus rien :
+
+- si des étapes suivantes s'appuient sur celle que vous effacez (par exemple D6 à D8 rédigées d'après D5), la commande les **liste et demande confirmation** ;
+- une **copie de l'étape** (réponses, et analyse des causes avec son plan d'actions) est conservée dans la corbeille du projet, enregistrée avec lui ;
+- **`/restaurer`** rétablit la copie. Si l'étape contient déjà de nouvelles saisies, `/restaurer oui` confirme le remplacement.
+
+Pour une étape d'analyse effacée **avant** cette protection, `/restaurer` reconstruit l'analyse d'après l'historique du projet (causes, réponses de l'arbre, branches abandonnées, FTA, corrections faites avec `/modifier`). Il en va de même pour le **plan d'actions D6** : si un changement de D5 l'a remis à zéro, `/etape D6` puis `/restaurer` le reconstruit (natures, actions, pilotes, délais). La reconstruction est une reprise fidèle mais heuristique : relisez la liste affichée, puis corrigez avec `/modifier` si besoin, et `/ok` pour revenir à l'étape où vous étiez.
 
 ### Trois modes (`/mode`)
 
@@ -123,29 +133,31 @@ Le mode est mémorisé ; passer de `libre` à `guide` conserve le texte déjà s
 
 ### Commandes
 
-| Commande                                               | Description                                                                                      |
-|---                                                     |---                                                                                               |
-| `/8d` `/a3` `/pdca` `/k6pts` `[titre]`                 | Démarre une démarche                                                                             |
-| *(texte libre)*                                        | Réponse à la question en cours (mode guidé)                                                      |
-| `-` · `/sauter` · `/prec`                              | Saute la question · revient à la précédente                                                      |
-| *phrase avec « ? »*                                    | Question posée au coach (explication générale)                                                   |
-| `/ok`                                                  | Valide l'étape (`/ok force` s'il reste des questions)                                            |
-| `/reponse` · `/effacer`                                | Relit les réponses de l'étape · recommence l'étape                                               |
-| `/passer` · `/retour`                                  | Saute l'étape · revient à la précédente (ou rouvre la dernière étape d'une démarche terminée)    |
-| `/etape <code>` · `/modifier [n] [texte]`              | Rouvre une étape déjà atteinte (même démarche terminée) · liste / corrige une saisie précise     |
-| `/guide`                                               | Rappelle l'étape (attendu, outils) et la question en cours                                       |
-| `/oui` · `/non` · `/fin`                               | Analyse des causes : réponse FTA · fin d'un facteur (Ishikawa) ou d'une branche des pourquoi     |
-| `/sanscauses`                                          | A3, PDCA, Kaizen : passe l'analyse des causes                                                    |
-| `/etat`                                                | Résumé des étapes (✅ faite, 👉 en cours, 📷 photos, 💬 échanges)                                |
-| `/titre [texte]` · `/sauver [titre]`                   | Titre · enregistrement explicite                                                                 |
-| `/projets` · `/charger <n>` · `/supprimer <n>`         | Liste, réouverture, suppression                                                                  |
-| `/stop`                                                | Met le projet de côté (conservé)                                                                 |
-| `/historique [étape\|tout]` · `/rapport [complet]`     | Relecture des échanges · rapport                                                                 |
-| `/modele`                                              | Moteur (Groq / Ollama), modèle texte, modèle photos, mode — **boutons** sous Telegram            |
-| `/mode guide\|rapide\|libre` · `/backend groq\|ollama` | Raccourcis                                                                                       |
-| `/aide` · `/help`                                      | Menu des commandes : **tableau** en terminal, liste sous Telegram                                |
-| `/q` · `/quit`                                         | **Terminal uniquement** : quitte le programme (le projet est enregistré)                         |
-| `/photo <chemin> [légende]`                            | **Terminal uniquement** : analyse une image locale                                               |
+| Commande                                               | Description                                                                                                                                |
+|---                                                     |---                                                                                                                                         |
+| `/8d` `/a3` `/pdca` `/k6pts` `[titre]`                 | Démarre une démarche                                                                                                                       |
+| *(texte libre)*                                        | Réponse à la question en cours (mode guidé)                                                                                                |
+| `-` · `/sauter` · `/prec`                              | Saute la question · revient à la précédente                                                                                                |
+| *phrase avec « ? »*                                    | Question posée au coach (explication générale)                                                                                             |
+| `/ok`                                                  | Valide l'étape (`/ok force` s'il reste des questions)                                                                                      |
+| `/reponse` · `/effacer`                                | Relit les réponses de l'étape · recommence l'étape (confirmation demandée si une analyse est saisie)                                       |
+| `/restaurer`                                           | Rétablit l'étape effacée (analyse reconstruite d'après l'historique si besoin)                                                             |
+| `/passer` · `/retour`                                  | Saute l'étape · revient à la précédente (ou rouvre la dernière étape d'une démarche terminée)                                              |
+| `/etape <code>` · `/modifier [n] [texte]`              | Rouvre une étape déjà atteinte (même démarche terminée) · liste / corrige une saisie précise                                               |
+| `/guide`                                               | Rappelle l'étape (attendu, outils) et la question en cours                                                                                 |
+| `/oui` · `/non` · `/fin`                               | Analyse des causes : réponse FTA · fin d'un facteur (Ishikawa) ou d'une branche des pourquoi                                               |
+| `/sanscauses`                                          | A3, PDCA, Kaizen : passe l'analyse des causes                                                                                              |
+| `/etat`                                                | Résumé des étapes (✅ faite, 👉 en cours, 📷 photos, 💬 échanges)                                                                          |
+| `/titre [texte]` · `/sauver [titre]`                   | Titre · enregistrement explicite                                                                                                           |
+| `/projets` · `/charger <n>` · `/supprimer <n>`         | Liste, réouverture, suppression                                                                                                            |
+| `/stop`                                                | Met le projet de côté (conservé)                                                                                                           |
+| `/historique [étape\|tout]` · `/rapport [complet]`     | Relecture des échanges · rapport                                                                                                           |
+| `/modele`                                              | Moteur (Groq / Ollama), modèle texte, modèle photos, mode — **boutons** sous Telegram                                                      |
+| `/mode guide\|rapide\|libre` · `/backend groq\|ollama` | Raccourcis                                                                                                                                 |
+| `/aide` · `/help`                                      | Menu des commandes : **tableau** en terminal, liste sous Telegram                                                                          |
+| `/q` · `/quit`                                         | **Terminal uniquement** : quitte le programme (le projet est enregistré)                                                                   |
+| `/photo <chemin> [légende]`                            | **Terminal uniquement** : analyse une image locale (espaces, accents, parenthèses acceptés ; images volumineuses réduites automatiquement) |
+| `/photo retirer [n\|tout]`                             | Retire une analyse de photo de l'étape (rapport et historique), sans toucher aux réponses                                                  |
 
 Sous Telegram, chaque message porte les **boutons** utiles (valider, sauter, état, projets, modèles…) : un bouton exécute simplement la commande correspondante.
 
