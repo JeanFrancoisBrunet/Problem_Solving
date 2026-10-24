@@ -3544,14 +3544,16 @@ def boucle_cli():
     afficher(rendre_cli(aide_tableau(court=True)))
     moteur = s.backend
     modele = s.modele("texte")
-    ligne_moteur = f"🤖 Moteur : {moteur} - {modele} - mode {s.mode}"
+    ligne_moteur = f"🤖 Moteur : {moteur} - {modele} - mode {s.mode} — /etat, /historique ou /projets"
+    if COULEUR_ACTIVE:                                  # ligne en jaune, commandes en cyan comme ailleurs
+        ligne_moteur = RE_CMD.sub(lambda x: f"\033[{C_CYAN}m{x.group(1)}{ANSI_FIN}\033[{C_JAUNE}m", ligne_moteur)
     print("\n" + teinte(C_JAUNE, ligne_moteur))
     if moteur == "ollama":
         print(rendre_cli("⚠️ Moteur local (Ollama) : plus lent. /modele b groq pour repasser sur Groq."))
     elif not CFG["GROQ_API_KEY"]:
         print(rendre_cli("⚠️ Clé Groq introuvable (GROQ_API_KEY ou ~/Projects/Groq_agent/.groq_config)."))
     if s.methode:
-        print(rendre_cli(f"📂 Projet en cours rechargé : « {s.titre} » — /etat, /historique ou /projets\n"))
+        print(rendre_cli(f"📂 Projet en cours rechargé : « {s.titre} »\n\n"))
         reprise = s.reprise_msgs()                      # on repose la question en attente
         for m in reprise:
             t = rendre_cli(texte_de(m))
