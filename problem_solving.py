@@ -1459,6 +1459,13 @@ def act_journal(ev, n):
     return out
 
 class Session:
+    confirmation = None        # (commande si « oui », commande si « non ») : réponse écrite à une confirmation
+
+    def confirmer(self, texte, oui, non, boutons):
+        """Pose une question oui/non : en terminal la réponse se tape à la suite, sur la même ligne."""
+        self.confirmation = (oui, non)
+        return msg(f"{texte} (oui / non)", boutons, ligne=True)
+
     def __init__(self, uid):
         self.uid = str(uid)
         self.dir = DATA_DIR / re.sub(r"[^\w.-]", "_", self.uid)
@@ -2551,9 +2558,9 @@ class Session:
         if c is None and not self.rca_step() and not self.act_step():
             return [f"Rien à restaurer sur l'étape {code} (aucune copie avant effacement)."]
         if courant and not confirme:
-            return [msg(f"⚠️ L'étape {code} contient déjà {courant} saisies ; /restaurer les remplace par la version "
-                        "d'avant l'effacement. Continuer ?",
-                        [[("♻️ Oui, restaurer", "/restaurer oui"), ("↩️ Non, garder", "/guide")]])]
+            return [self.confirmer(f"⚠️ L'étape {code} contient déjà {courant} saisies ; /restaurer les remplace par la "
+                                   "version d'avant l'effacement. Continuer ?", "/restaurer oui", "/guide",
+                                   [[("♻️ Oui, restaurer", "/restaurer oui"), ("↩️ Non, garder", "/guide")]])]
         if c is not None:
             if c.get("qr") is not None:
                 self.qr[code] = c["qr"]
@@ -2736,18 +2743,18 @@ class Session:
                     "Rien à valider : rédigez votre réponse à l'étape "
                     "(l'analyse d'une photo ne remplace pas vos propres constats)."], None
         if self.act_actif() and not force:
-            return [msg("⚠️ Le plan d'actions (une ou plusieurs actions par cause racine, avec pilote et délai) "
-                        "n'est pas terminé. Valider quand même ?",
-                        [[("✅ Valider quand même", "/ok force"), ("▶️ Continuer", "/guide")]])], None
+            return [self.confirmer("⚠️ Le plan d'actions (une ou plusieurs actions par cause racine, avec pilote et "
+                                   "délai) n'est pas terminé. Valider quand même ?", "/ok force", "/guide",
+                                   [[("✅ Valider quand même", "/ok force"), ("▶️ Continuer", "/guide")]])], None
         if self.rca_actif() and not force:
-            return [msg("⚠️ L'analyse des causes (Ishikawa, FTA, 5 Pourquoi) n'est pas terminée. "
-                        "Valider quand même ?",
-                        [[("✅ Valider quand même", "/ok force"), ("▶️ Continuer", "/guide")]])], None
+            return [self.confirmer("⚠️ L'analyse des causes (Ishikawa, FTA, 5 Pourquoi) n'est pas terminée. "
+                                   "Valider quand même ?", "/ok force", "/guide",
+                                   [[("✅ Valider quand même", "/ok force"), ("▶️ Continuer", "/guide")]])], None
         if self.guide_actif() and self.questions_restantes() and not force:
             n = self.questions_restantes()
-            return [msg(f"⚠️ Il reste {n} question{'s' if n > 1 else ''} dans cette étape. "
-                        "Valider quand même ?",
-                        [[("✅ Valider quand même", "/ok force"), ("▶️ Continuer les questions", "/guide")]])], None
+            return [self.confirmer(f"⚠️ Il reste {n} question{'s' if n > 1 else ''} dans cette étape. "
+                                   "Valider quand même ?", "/ok force", "/guide",
+                                   [[("✅ Valider quand même", "/ok force"), ("▶️ Continuer les questions", "/guide")]])], None
         self.reponses[self.code] = self.brouillon
         self.noter("s", "Étape validée.")
         if self.cible is not None and self.idx < self.cible:
@@ -2885,7 +2892,7 @@ class Session:
             lignes.append(f"{i}. {actif}{self._resume_projet(d)}")
             lib = f"{'▶️ ' if pid == self.pid else ''}{i}. {coupe(d.get('titre', 'Sans titre'), 28)} ({METHODES[d['methode']]['nom']})"
             boutons.append([(lib, f"/charger {pid}")])
-        lignes.append("\n/charger <n> pour ré-ouvrir · /supprimer <n> pour effacer")
+        lignes.append("\n/charger <n> pour ré-ouvrir     /supprimer <n> pour effacer")
         return msg("\n".join(lignes), boutons, remplace=True)
 
     def _resoudre_projet(self, arg):
@@ -2985,8 +2992,9 @@ class Session:
         if not pid:
             return [msg("Indiquez le projet à supprimer (/projets pour la liste) : /supprimer <n>")]
         d = lire_json(self.dir / f"{pid}.json", {}) or {}
-        return [msg(f"🗑 Supprimer définitivement « {d.get('titre', pid)} » ?",
-                    [[("🗑 Oui, supprimer", f"/supprimer oui {pid}"), ("Annuler", "/projets")]])]
+        return [self.confirmer(f"🗑 Supprimer définitivement « {d.get('titre', pid)} » ?",
+                               f"/supprimer oui {pid}", "/projets",
+                               [[("🗑 Oui, supprimer", f"/supprimer oui {pid}"), ("Annuler", "/projets")]])]
 
     # -- moteur et modèles ---------------------------------------------------------
     def _choisir(self, liste, x):
@@ -3272,7 +3280,8 @@ class Session:
                               "inchangées. ")
                 texte += ("Pour retirer seulement une photo : /photo retirer ; corriger une saisie : /modifier ; "
                           "annuler la dernière : /prec. Une copie est gardée : /restaurer la rétablit. Tout effacer ?")
-                return [msg(texte, [[("🧹 Oui, tout effacer", "/effacer oui"), ("↩️ Non, garder", "/guide")]])], None
+                return [self.confirmer(texte, "/effacer oui", "/guide",
+                                       [[("🧹 Oui, tout effacer", "/effacer oui"), ("↩️ Non, garder", "/guide")]])], None
             self.corbeille[self.code] = json.loads(json.dumps({
                 "qr": self.qr.get(self.code), "rca": self.rca if self.rca_step() else None,
                 "act": self.act if self.methode == "8d" and self.code == "D6" else None,
@@ -3329,6 +3338,9 @@ class Session:
             t = "-"                                       # Entrée = plus d'autre action
         if not t:
             return [], None
+        attente, self.confirmation = self.confirmation, None   # confirmation demandée juste avant, s'il y en a une
+        if attente and t.lower().strip(" .!") in ("oui", "o", "yes", "y", "non", "n", "annuler"):
+            t = attente[0] if t.lower().strip(" .!") in ("oui", "o", "yes", "y") else attente[1]
         if t.startswith("/"):
             cmd, _, arg = t.partition(" ")
             return self.commande(cmd.lower().split("@")[0], arg.strip(), cli=cli)
