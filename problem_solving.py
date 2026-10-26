@@ -191,11 +191,12 @@ METHODES = {
               "Savoir où se situent les causes potentielles d'occurrence ET de non-détection, avant "
               "toute analyse approfondie.",
               ["Nature du problème : sait-on le reconnaître ?",
-               "Flux de matières, pièces ou informations reconstitué jusqu'au lieu de détection",
+               "Parcours reconstitué jusqu'au lieu de détection : flux de matières, pièces ou informations, "
+               "ou, si le problème n'est pas lié à un flux, étapes d'usage ou de vie concernées",
                "Où le problème a pu naître (occurrence) ? Où aurait-il dû être arrêté (non-détection) ?",
                "Problème complexe : faut-il le décomposer (problèmes similaires en des endroits "
                "différents) ?"],
-              "Cartographie du flux, Pareto, concentration des défauts, comparaison conforme / non conforme"),
+              "Cartographie du flux (schéma, photo), Pareto, concentration des défauts, comparaison conforme / non conforme"),
             E("D4", "Actions immédiates de sécurisation", "Comment protéger le client maintenant ?",
               "Le client est protégé à 100 % des effets du problème, en attendant les actions "
               "correctives ; action temporaire qui ne traite pas la cause ; validée par le client ou "
@@ -524,11 +525,14 @@ QUESTIONS = {
     ("8d", "D3"): [
         Q("Reconnaître le problème", "Comment reconnaît-on le problème (symptôme caractéristique) ? Faut-il le "
           "décomposer en plusieurs problèmes similaires apparus en des endroits différents ?"),
-        Q("Flux", "Décrivez le flux (matières, pièces, informations) depuis son début jusqu'au point où le "
-          "problème est détecté : quelles sont les étapes ?"),
-        Q("Occurrence potentielle", "À quelles étapes du flux le problème a-t-il pu naître ?"),
-        Q("Non-détection potentielle", "À quelles étapes aurait-il dû être arreté ? Quels contrôles existent "
-          "et pourquoi n'ont-ils pas joué leur rôle ?"),
+        Q("Flux ou parcours", "Le problème est-il lié à un flux (matières, pièces, informations) ? Si oui, décrivez-le "
+          "étape par étape, de son début au point où le problème est détecté ; une photo ou un schéma aide "
+          "(/photo). Sinon, décrivez les étapes d'usage ou de vie (produit, processus, activité) jusqu'à la "
+          "détection du problème.",
+          ""),
+        Q("Occurrence potentielle", "À quelles étapes (du flux ou du parcours) le problème a-t-il pu naître ?"),
+        Q("Non-détection potentielle", "À quelles étapes aurait-il dû être arrêté ? Quels contrôles existent "
+          "ou manquent-ils, et pourquoi n'ont-ils pas joué leur rôle ?"),
     ],
     ("8d", "D4"): [
         Q("Actions de sécurisation", "Quelles actions immédiates protègent le client (quarantaine, tri, "
@@ -1895,7 +1899,8 @@ class Session:
             f"Étape {self.code} {self.etape['titre']}.\nRéponses déjà données sur cette étape :\n{deja}\n\n"
             f"Question posée : {q}\nRéponse de l'utilisateur : {reponse}\n\n"
             "Évalue UNIQUEMENT cette réponse. Si elle est factuelle et répond à la question (ou si "
-            "l'utilisateur indique ne pas savoir), réponds exactement : OK\n"
+            "l'utilisateur indique ne pas savoir, ou que la question ne s'applique pas à sa situation, ou "
+            "qu'aucun contrôle ou élément n'existe), réponds exactement : OK\n"
             "Sinon, réponds par UNE seule question de relance courte (30 mots maximum) qui demande "
             "l'information, le fait ou le chiffre manquant. Pas de conseil, pas de reformulation, pas de liste."
         )
@@ -1924,7 +1929,8 @@ class Session:
             f"\nRéponses de l'utilisateur à cette étape (question par question) :\n{coupe(self.brouillon, 3000)}\n\n"
             "Fais une revue brève de l'étape par rapport à l'attendu (80 mots maximum). Première ligne "
             "EXACTEMENT « VERDICT : SUFFISANT » ou « VERDICT : À COMPLÉTER ». Ensuite, au plus 2 manques "
-            "précis (faits, chiffres, preuves absents). Ne pose pas de question et ne reformule pas."
+            "précis (faits, chiffres, preuves absents). Ne réclame pas un élément que l'utilisateur a indiqué "
+            "ne pas s'appliquer à sa situation. Ne pose pas de question et ne reformule pas."
         )
         retour = self.appeler_llm(prompt, max_tokens=700)
         verdict, corps = self.lire_verdict(retour)
