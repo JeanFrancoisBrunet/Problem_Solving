@@ -123,6 +123,8 @@ CFG = {
 }
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 IMAGE_EXT = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif"}
+PIECE_TEXTE_EXT = {".txt", ".md", ".csv", ".tsv", ".log", ".json", ".xml", ".yaml", ".yml", ".ini"}
+PIECE_MAX = 20 * 1024 * 1024                 # taille maximale d'un document joint
 IMAGE_MAX_OCTETS = 20 * 1024 * 1024      # photo à l'entrée
 IMAGE_MAX_ENVOI = 3_500_000              # après redimensionnement (limite Groq : 4 Mo en base64)
 
@@ -712,7 +714,7 @@ SYSTEM_PROMPT = (
     "claire et bienveillante mais exigeante. Tu t'appuies uniquement sur ce que "
     "l'utilisateur a dit ou sur ce qui est visible : tu n'inventes jamais de faits, de chiffres "
     "ni de causes. Tu te réfères aux « points à couvrir » de l'étape et tu signales ceux qui ne sont "
-    "pas encore traités. Tu repères : les affirmations floues ou sans données, les solutions déguisées "
+    "pas encore traités. Tu repères : les affirmations incomplètes ou sans données, les solutions déguisées "
     "en causes, les causes qui accusent une personne au lieu d'un processus, les objectifs "
     "non mesurables. Tu poses des questions pour faire progresser l'utilisateur plutôt "
     "que de tout écrire à sa place. Tes questions et explications restent générales : jamais "
@@ -727,52 +729,55 @@ SYSTEM_PROMPT = (
 # ----------------------------------------------------------------------------
 AIDE_SECTIONS = [
     ("DÉMARCHES", [
-        ("/8d [titre]", "8D : Résolution en équipe, sur 8 étapes & Synthèse", ""),
-        ("/a3 [titre]", "A3 : du contexte jusqu'aux enseignements, sur une feuille A3", ""),
-        ("/pdca [titre]", "PDCA (cycle court) : Planifier, Réaliser, Vérifier, Ajuster", ""),
-        ("/k6pts [titre]", "Kaizen 6 points    : Observer, Tester, Retenir ce qui marche", ""),
+        ("/8d [titre]", "8D : équipe, 8 étapes et synthèse", ""),
+        ("/a3 [titre]", "A3 : du contexte aux enseignements", ""),
+        ("/pdca [titre]", "PDCA : cycle court en quatre temps", ""),
+        ("/k6pts [titre]", "Kaizen 6 points : observer, tester, retenir", ""),
     ]),
     ("PENDANT UNE DÉMARCHE", [
-        ("(votre réponse)", "Répondez à la question ; le coach relance si nécessaire", ""),
+        ("(votre réponse)", "Répondez ; le coach relance si besoin", ""),
         ("  -    ou   /sauter", "Laisse la question sans réponse", ""),
         ("/prec", "Revient à la question précédente", ""),
-        ("phrase avec ?", "Pose une question au coach (la question en cours reste posée)", ""),
+        ("phrase avec ?", "Question au coach (la question reste posée)", ""),
         ("photo", "Envoyez une photo (légende = question) : analysée, jointe au rapport", "tg"),
         ("/photo <chemin> [légende]", "Analyse une image, jointe au rapport", "cli"),
-        ("/photo retirer [n|tout]", "Retire une photo du rapport (sans modifier les réponses)", ""),
-        ("/restaurer", "Rétablit l'étape effacée (reconstruite d'après l'historique)", ""),
+        ("/photo retirer [n|tout]", "Retire une photo du rapport", ""),
+        ("/doc <chemin> [légende]", "Joint un fichier comme preuve au rapport", "cli"),
+        ("fichier", "Envoyez un document (PDF, texte, tableur…) : joint comme preuve au rapport", "tg"),
+        ("/doc retirer [n|tout]", "Retire un document joint du rapport", ""),
+        ("/restaurer", "Rétablit l'étape effacée", ""),
         ("/ok    ou    ok", "Valide l'étape", ""),
-        ("/passer     /retour", "Passe l'étape / Revient à l'étape précédente", ""),
-        ("/etape <code|n>", "Ré-ouvre une étape déjà atteinte (même terminée), /ok revalide", ""),
-        ("/modifier [n] [texte]", "Liste / corrige une saisie précise de l'étape (même en analyse)", ""),
-        ("/reponse    /effacer", "Relit vos réponses de l'étape / Recommence l'étape", ""),
-        ("/guide      /etat", "Rappelle l'attendu et la question / Résumé des étapes", ""),
-        ("/oui  /non  /fin", "Analyse des causes : réponse FTA / fin d'un facteur ou d'une branche", ""),
-        ("/sanscauses", "A3, PDCA, Kaizen : passe l'analyse des causes", ""),
+        ("/passer     /retour", "Passe l'étape / Revient en arrière", ""),
+        ("/etape <code|n>", "Ré-ouvre une étape (/ok revalide)", ""),
+        ("/modifier [n] [texte]", "Liste / corrige une saisie de l'étape", ""),
+        ("/reponse    /effacer", "Relit les réponses / Recommence l'étape", ""),
+        ("/guide      /etat", "Rappel de l'étape / Résumé des étapes", ""),
+        ("/oui  /non  /fin", "Analyse des causes : FTA / fin de branche", ""),
+        ("/sanscauses", "A3, PDCA, Kaizen : passe les causes", ""),
     ]),
     ("MODE DU COACH", [
-        ("/mode guide", "Questions une par une, relance de l'IA si besoin (par défaut)", ""),
-        ("/mode rapide", "Questions une par une, sans IA (plus rapide en local)", ""),
-        ("/mode libre", "Vous écrivez librement, le coach commente l'ensemble", ""),
+        ("/mode guide", "Une question à la fois, relance IA (défaut)", ""),
+        ("/mode rapide", "Une question à la fois, sans IA", ""),
+        ("/mode libre", "Vous écrivez librement, le coach commente", ""),
     ]),
     ("PROJETS", [
-        ("/projets    /charger <n>", "Liste de vos projets / Ré-ouvre un projet avec tout son historique", ""),
-        ("/sauver     /stop", "Enregistre (automatiquement) / Met de côté", ""),
-        ("/titre [texte]", "Définit ou modifie le titre, à tout moment", ""),
+        ("/projets    /charger <n>", "Liste / ré-ouvre un projet", ""),
+        ("/sauver     /stop", "Enregistre / Met de côté", ""),
+        ("/titre [texte]", "Définit ou modifie le titre", ""),
         ("/historique [étape|tout]", "Relit les échanges conservés", ""),
-        ("/rapport [complet]", "Génère le rapport (complet avec tous les échanges)", ""),
+        ("/rapport [complet]", "Génère le rapport (complet = échanges)", ""),
         ("/supprimer [n]", "Efface un projet (avec confirmation)", ""),
     ]),
     ("MOTEUR IA", [
-        ("/modele", "Choisit le moteur (Groq ou Ollama) et les modèles", ""),
-        ("/backend groq|ollama", "Raccourci pour changer de moteur", ""),
+        ("/modele [b|t|v]", "Moteur (b), modèle texte (t) ou vision (v)", ""),
+        ("/backend groq|ollama", "Raccourci : changer de moteur", ""),
     ]),
     ("AIDE ET SORTIE", [
         ("/aide  ou   /help", "Affiche ce menu", ""),
-        ("/q     ou   /quit", "Quitte le programme (& enregistre le projet)", "cli"),
+        ("/q     ou   /quit", "Quitte (& enregistre le projet)", "cli"),
     ]),
 ]
-# Menu court affiché au lancement du terminal : l'essentiel sur quelques lignes
+
 AIDE_COURTE = [
     ("/8d  /a3  /pdca     /k6pts", "Démarre une démarche (ajouter un titre)"),
     ("/projets  /charger <n>", "Liste / Ré-ouvre un projet"),
@@ -794,32 +799,40 @@ def aide_texte():
     return "\n".join(lignes)
 
 def aide_tableau(largeur=None, court=False):
-    """Menu en tableau à deux colonnes (terminal), compact : le titre de chaque section est
-    inscrit dans le trait de séparation (une ligne par section). court=True : l'essentiel
-    seulement (écran de lancement)."""
+    """Menu en tableau (terminal), compact : le titre de chaque section est inscrit dans le trait de
+    séparation. Selon la largeur, 1, 2 ou 3 commandes par ligne (aide sur une seule page).
+    court=True : l'essentiel seulement (écran de lancement)."""
     import textwrap
-    largeur = min(largeur or largeur_terminal(), 112)
+    largeur = min(largeur or largeur_terminal(), 230)
     blocs = ([("COMMANDES ESSENTIELLES", [(c, d, "") for c, d in AIDE_COURTE])]
              if court else AIDE_SECTIONS)
+    nb = 1 if court else 3 if largeur >= 225 else 2 if largeur >= 130 else 1
+    if nb == 1:
+        largeur = min(largeur, 112)
     rangs = [(c, d) for _, lst in blocs for c, d, ou in lst if ou != "tg"]
-    c1 = min(max(len(c) for c, _ in rangs), 30)
-    c2 = max(30, largeur - c1 - 7)
+    c1 = min(max(len(c) for c, _ in rangs), 30 if nb == 1 else 25)
+    c2 = max(20, (largeur - 4 - 3 * (nb - 1) - nb * (c1 + 3)) // nb)
+    segments = [c1 + 2, c2 + 2] * nb
     def trait(g, m, d, titre=""):
-        gauche = ("─ " + titre + " ").ljust(c1 + 2, "─") if titre else "─" * (c1 + 2)
-        return g + gauche + m + "─" * (c2 + 2) + d
+        premier = ("─ " + titre + " ").ljust(segments[0], "─") if titre else "─" * segments[0]
+        return g + m.join([premier] + ["─" * w for w in segments[1:]]) + d
     sortie = []
     for k, (titre, lst) in enumerate(blocs):
         sortie.append(trait("┌" if k == 0 else "├", "┬" if k == 0 else "┼",
                             "┐" if k == 0 else "┤", titre))
-        for c, d, ou in lst:
-            if ou == "tg":
-                continue
-            cellule1 = textwrap.wrap(c, c1) or [""]
-            cellule2 = textwrap.wrap(d, c2) or [""]
-            for i in range(max(len(cellule1), len(cellule2))):
-                x = cellule1[i] if i < len(cellule1) else ""
-                y = cellule2[i] if i < len(cellule2) else ""
-                sortie.append(f"│ {x.ljust(c1)} │ {y.ljust(c2)} │")
+        items = [(c, d) for c, d, ou in lst if ou != "tg"]
+        for i in range(0, len(items), nb):
+            groupe = items[i:i + nb]
+            cellules = [(textwrap.wrap(c, c1) or [""], textwrap.wrap(d, c2) or [""]) for c, d in groupe]
+            hauteur = max(max(len(a), len(b)) for a, b in cellules)
+            for h in range(hauteur):
+                morceaux = []
+                for j in range(nb):
+                    a, b = cellules[j] if j < len(cellules) else ([""], [""])
+                    x = a[h] if h < len(a) else ""
+                    y = b[h] if h < len(b) else ""
+                    morceaux.append(f"{x.ljust(c1)} │ {y.ljust(c2)}")
+                sortie.append("│ " + " │ ".join(morceaux) + " │")
     sortie.append(trait("└", "┴", "┘"))
     if not court:
         sortie.append("🔒 " + AIDE_CONFIDENTIALITE)
@@ -838,6 +851,33 @@ def msg(texte, boutons=None, remplace=False, ligne=False):
     if not boutons and not remplace and not ligne:
         return texte
     return {"texte": texte, "boutons": boutons or [], "remplace": remplace, "ligne": ligne}
+
+# Telegram ne rend cliquable que « /commande » sans espace : les commandes à option s'écrivent donc
+# « /mode_rapide » (même effet que « /mode rapide »).
+TG_LISTES = [
+    (re.compile(r"/mode guide\|rapide\|libre"), "/mode_guide  /mode_rapide  /mode_libre"),
+    (re.compile(r"/backend groq\|ollama"), "/backend_groq  /backend_ollama"),
+    (re.compile(r"/modele b groq\|ollama"), "/modele_b_groq  /modele_b_ollama"),
+    (re.compile(r"/photo retirer \[n\|tout\]"), "/photo_retirer  /photo_retirer_tout"),
+    (re.compile(r"/doc retirer \[n\|tout\]"), "/doc_retirer  /doc_retirer_tout"),
+]
+TG_SIMPLES = re.compile(r"/(mode) (guide|rapide|libre)\b|/(backend) (groq|ollama)\b|/(etape|aller) ([A-Za-z]{0,2}\d+)\b"
+                        r"|/(rapport) (complet)\b|/(historique) (tout)\b|/(photo|doc) (retirer)\b")
+RE_CMD_SOULIGNE = re.compile(r"^/(mode|backend|modele|etape|aller|rapport|historique|photo|doc|charger|supprimer)_(\S+)(.*)$",
+                             re.I | re.S)
+
+def tg_cmds(texte):
+    for r, n in TG_LISTES:
+        texte = r.sub(n, texte)
+    return TG_SIMPLES.sub(lambda m: "/" + "_".join(g for g in m.groups() if g), texte)
+
+def tg_msg(m):
+    if isinstance(m, dict):
+        return dict(m, texte=tg_cmds(m["texte"]))
+    return tg_cmds(m)
+
+def taille_lisible(n):
+    return f"{n / 1024 / 1024:.1f} Mo" if n >= 1024 * 1024 else f"{max(1, round(n / 1024))} Ko" if n else "0 Ko"
 
 def texte_de(m):
     return m["texte"] if isinstance(m, dict) else m
@@ -1086,13 +1126,13 @@ def libelle_modele(backend, usage, modele):
 # Session : utilisateur + projet actif
 # ----------------------------------------------------------------------------
 CHAMPS_PROJET = ("methode", "titre", "titre_propose", "idx", "reponses", "photos", "fil", "qr",
-                 "brouillon", "fini", "debut", "maj", "rca", "act", "cible", "corbeille")
-MODES = {"guide": "guidé : une question à la fois, avec relance IA si la réponse est floue",
+                 "brouillon", "fini", "debut", "maj", "rca", "act", "cible", "corbeille", "pieces")
+MODES = {"guide": "guidé : une question à la fois, avec relance IA si la réponse est incomplète",
          "rapide": "rapide : une question à la fois, sans appel IA (idéal avec un modèle local lent)",
          "libre": "libre : vous écrivez la réponse de l'étape, le coach commente"}
 RE_REPONSE_NEUTRE = re.compile(r"(non|oui|nsp|je ne sais pas|aucun|aucune|n/?a|rien|ok|d'accord)\.?", re.I)
 LIB_FIL = {"u": "🧑 Vous", "c": "🧭 Coach", "q": "🧑 Vous (question)", "a": "🧭 Coach",
-           "p": "📷 Photo", "s": "⚙️"}
+           "p": "📷 Photo", "f": "📎 Document joint", "s": "⚙️"}
 
 # ----------------------------------------------------------------------------
 # D5 : Ishikawa 6M (occurrence puis non-détection) → FTA → 5 Pourquoi
@@ -1547,6 +1587,7 @@ class Session:
         self.idx = 0
         self.reponses = {}
         self.photos = {}          # code d'étape -> [{"legende", "analyse", "date"}]
+        self.pieces = {}          # code d'étape -> [{"nom", "legende", "date", "taille", "fichier", "extrait"}]
         self.fil = {}             # code d'étape -> [{"r", "t", "d"}] : TOUS les échanges
         self.qr = {}              # mode guidé : code d'étape -> {"i": question en cours, "r": {n: réponse}, "rel": n|None}
         self.brouillon = ""       # réponse en cours (cumul de vos messages sur l'étape)
@@ -1726,7 +1767,7 @@ class Session:
         i = st["i"]
         if i >= len(qs):
             return msg("✅ Toutes les questions de l'étape sont traitées. Vous pouvez encore ajouter un "
-                       "complément (écrivez-le), puis validez.", BTN_FIN_QUESTIONS)
+                       "complément (écrivez-le), ou validez (/ok).", BTN_FIN_QUESTIONS)
         lib, q, ex = qs[i]
         texte = f"❓ Question {i + 1}/{len(qs)} — {lib}\n{q}"
         if ex:
@@ -1788,10 +1829,18 @@ class Session:
 
     def photos_etape(self):
         morceaux = [f"- {coupe(p['analyse'], 350)}" for p in self.photos.get(self.code, [])[-2:]]
-        if not morceaux:
-            return ""
-        return ("\nPhotos jointes à cette étape (analyse IA, à vérifier sur le terrain) :\n"
-                + "\n".join(morceaux) + "\n")
+        texte = ("\nPhotos jointes à cette étape (analyse IA, à vérifier sur le terrain) :\n"
+                 + "\n".join(morceaux) + "\n") if morceaux else ""
+        pieces = []
+        for p in self.pieces.get(self.code, [])[-5:]:
+            ligne = f"- {p['nom']}" + (f" ({p['legende']})" if p.get("legende") else "")
+            if p.get("extrait"):
+                ligne += f" — contenu : {coupe(p['extrait'], 600)}"
+            pieces.append(ligne)
+        if pieces:
+            texte += ("\nDocuments joints par l'utilisateur à cette étape (preuves documentaires) :\n"
+                      + "\n".join(pieces) + "\n")
+        return texte
 
     def historique(self, arg=""):
         """Échanges conservés : étape en cours, une étape donnée (ex. D3) ou « tout »."""
@@ -1833,6 +1882,9 @@ class Session:
         if not st.get("r") and not st.get("c"):             # étape à peine commencée
             return [entete] + self.invite_msgs()
         sortie = [entete]
+        self.synchroniser()
+        if self.brouillon:                                  # ce qui a déjà été saisi sur l'étape
+            sortie.append(f"🧾 Vos réponses jusqu'ici ({self.code}) :\n{self.brouillon}")
         if st.get("rel") is not None and not (self.rca_actif() or self.act_actif()):   # relance de l'IA en attente
             relances = [e for e in self.fil.get(self.code, []) if e["r"] == "c"]
             if relances:
@@ -1891,7 +1943,7 @@ class Session:
         return f"{tete}\n\n{corps}"
 
     def verifier(self, question, reponse):
-        """Mode guidé : relance courte si la réponse est floue ; '' si elle est suffisante."""
+        """Mode guidé : relance courte si la réponse est incomplète ; '' si elle est suffisante."""
         lib, q, _ = question
         deja = self.assembler(sauf=self.qetat()["i"]) or "(rien)"
         prompt = (
@@ -1930,7 +1982,8 @@ class Session:
             "Fais une revue brève de l'étape par rapport à l'attendu (80 mots maximum). Première ligne "
             "EXACTEMENT « VERDICT : SUFFISANT » ou « VERDICT : À COMPLÉTER ». Ensuite, au plus 2 manques "
             "précis (faits, chiffres, preuves absents). Ne réclame pas un élément que l'utilisateur a indiqué "
-            "ne pas s'appliquer à sa situation. Ne pose pas de question et ne reformule pas."
+            "ne pas s'appliquer à sa situation, ni une preuve déjà jointe (photo ou document listé ci-dessus). "
+            "Ne pose pas de question et ne reformule pas."
         )
         retour = self.appeler_llm(prompt, max_tokens=700)
         verdict, corps = self.lire_verdict(retour)
@@ -2819,6 +2872,13 @@ class Session:
                 lignes += [f"> 📷 **Photo{leg}** ({p.get('date', '')}) — analyse IA, "
                            "à vérifier sur le terrain", ">"]
                 lignes += ["> " + ligne for ligne in p["analyse"].splitlines()] + [""]
+            for p in self.pieces.get(code, []):
+                leg = f" — {p['legende']}" if p.get("legende") else ""
+                lignes += [f"> 📎 **Document joint{leg}** : {p['nom']} ({taille_lisible(p.get('taille', 0))}, "
+                           f"{p.get('date', '')})", f"> fichier conservé : {p.get('fichier', '')}"]
+                if p.get("extrait"):
+                    lignes += [">", "> Extrait :"] + ["> " + l for l in coupe(p["extrait"], 1500).splitlines()]
+                lignes += [""]
         if revue:
             lignes += ["## Revue de cohérence (IA)", "", revue, ""]
         if complet:
@@ -2850,8 +2910,9 @@ class Session:
             else:
                 marque = "▫️"
             nb_p = len(self.photos.get(code, []))
+            nb_f = len(self.pieces.get(code, []))
             nb_e = len([x for x in self.fil.get(code, []) if x["r"] in ("u", "q")])
-            extra = (f"  📷×{nb_p}" if nb_p else "") + (f"  💬{nb_e}" if nb_e else "")
+            extra = (f"  📷×{nb_p}" if nb_p else "") + (f"  📎×{nb_f}" if nb_f else "") + (f"  💬{nb_e}" if nb_e else "")
             out.append(f"{marque} {code} {e['titre']}{extra}")
         if self.guide_actif() and not self.fini:
             n = len(self.questions())
@@ -3016,11 +3077,11 @@ class Session:
         b = self.backend
         texte_actif, vision_actif = self.modele("texte"), self.modele("vision")
         lignes = [prefixe] if prefixe else []
-        lignes += ["🤖 Moteur IA", f"   Moteur : {b}"]
+        lignes += [f"🤖 Moteur IA (b) : {b}"]
         boutons = [[(("✅ " if b == "groq" else "") + "Groq (cloud)", "/modele b groq"),
                     (("✅ " if b == "ollama" else "") + "Ollama (Pi5)", "/modele b ollama")]]
-        for usage, actif, icone, titre in (("texte", texte_actif, "🧠", "Texte"),
-                                           ("vision", vision_actif, "📷", "Photos")):
+        for usage, actif, icone, titre in (("texte", texte_actif, "🧠", "Texte (t)"),
+                                           ("vision", vision_actif, "📷", "Vision (v)")):
             cat = catalogue(b, usage)
             lignes.append(f"\n{icone} {titre} : {libelle_modele(b, usage, actif)}")
             if not cat:
@@ -3033,7 +3094,8 @@ class Session:
         lignes.append(f"\n🧭 Mode : {self.mode} — {MODES[self.mode]}")
         boutons.append([(("✅ " if self.mode == m else "") + lib, f"/mode {m}")
                         for m, lib in (("guide", "Guidé"), ("rapide", "Rapide"), ("libre", "Libre"))])
-        lignes.append("\nTaper : /modele b groq|ollama   /modele t <n|nom>   /modele v <n|nom>   /mode guide|rapide|libre")
+        lignes.append("\nTaper : /modele b groq|ollama   /modele t <n|nom>   /modele v <n|nom>   /mode guide|rapide|libre"
+                      "\n(b = moteur, t = modèle texte, v = modèle vision)")
         boutons.append([("📊 État", "/etat")])
         return msg("\n".join(lignes), boutons, remplace=True)
 
@@ -3065,7 +3127,7 @@ class Session:
             return self.menu_modeles(f"⚠️ Modèle inconnu : « {choix} » (indiquez le numéro ou le nom).")
         self.prefs.setdefault("modeles", {}).setdefault(self.backend, {})[usage] = mid
         self.sauver_prefs()
-        return self.menu_modeles(f"✅ {'Photos' if usage == 'vision' else 'Texte'} : {libelle_modele(self.backend, usage, mid)}")
+        return self.menu_modeles(f"✅ {'Vision' if usage == 'vision' else 'Texte'} : {libelle_modele(self.backend, usage, mid)}")
 
     def cmd_mode(self, arg):
         valeur = arg.strip().lower().replace("guidé", "guide")
@@ -3084,11 +3146,13 @@ class Session:
 
     # -- commandes -----------------------------------------------------------------
     @staticmethod
-    def resoudre_image(arg):
+    def resoudre_image(arg, ext=None):
         """Sépare « chemin [légende] ». Le chemin peut contenir des espaces, des parenthèses, des accents,
         être entre guillemets, ou avoir des « \\ » (espace protégé « \\  » ou « \\ » tapé à la place de « / »).
+        ext : extensions admises (images par défaut ; « tout » pour n'importe quel fichier).
         Retourne (Path ou None, légende, premier chemin essayé)."""
         import unicodedata
+        ext = IMAGE_EXT if ext is None else ext
         arg = arg.strip()
         if not arg:
             return None, "", ""
@@ -3105,11 +3169,11 @@ class Session:
                 for forme in ("NFC", "NFD"):
                     c = Path(unicodedata.normalize(forme, v)).expanduser()
                     essai = essai or str(c)
-                    if c.suffix.lower() in IMAGE_EXT and c.is_file():
+                    if (ext == "tout" or c.suffix.lower() in ext) and c.is_file():
                         reste = " ".join(mots[k:]).replace("\0", "").strip()
                         return c, reste, essai
         for k in range(len(mots), 0, -1):                 # pour le message d'erreur : jusqu'au mot « *.jpg »
-            if mots[k - 1].lower().endswith(tuple(IMAGE_EXT)):
+            if ext != "tout" and mots[k - 1].lower().endswith(tuple(ext)):
                 essai = " ".join(mots[:k]).replace("\0", "").strip().replace("\\ ", " ").replace("\\", "/")
                 break
         return None, "", essai
@@ -3151,6 +3215,108 @@ class Session:
                     + (f" {reste} photo{'s' if reste > 1 else ''} restante{'s' if reste > 1 else ''}." if reste else ""),
                     BTN_RETOUR_COACH if self.guide_actif() else None)]
 
+    @staticmethod
+    def extraire_texte(nom, donnees):
+        """Texte lisible d'un document (txt, csv, json…, PDF si un lecteur est installé) ; '' sinon."""
+        suffixe = Path(nom).suffix.lower()
+        if suffixe in PIECE_TEXTE_EXT:
+            return donnees.decode("utf-8", errors="replace").strip()[:4000]
+        if suffixe == ".pdf":
+            try:
+                import io
+                from pypdf import PdfReader
+                lecteur = PdfReader(io.BytesIO(donnees))
+                return " ".join((p.extract_text() or "") for p in lecteur.pages[:10]).strip()[:4000]
+            except Exception:
+                pass
+            try:
+                import subprocess
+                r = subprocess.run(["pdftotext", "-l", "10", "-", "-"], input=donnees, capture_output=True, timeout=30)
+                return r.stdout.decode("utf-8", errors="replace").strip()[:4000]
+            except Exception:
+                return ""
+        return ""
+
+    def joindre_piece(self, donnees, nom, legende=""):
+        """Joint un fichier (preuve) à l'étape en cours : copié dans le dossier du projet, listé dans le rapport."""
+        if not self.methode:
+            return ["Ouvrez d'abord une démarche (/8d, /a3, /pdca, /k6pts) : le document est rattaché à une étape."]
+        if self.fini:
+            return ["📎 La démarche est terminée : un document joint maintenant ne serait rattaché à aucune étape. "
+                    "Rouvrez d'abord l'étape concernée (/etape <code>), joignez le document, puis /ok."]
+        if len(donnees) > PIECE_MAX:
+            return [f"⚠️ Fichier trop volumineux ({taille_lisible(len(donnees))}) : {PIECE_MAX // 1024 // 1024} Mo au maximum."]
+        nom = re.sub(r"[^\w.\- ()]", "_", Path(nom).name) or "document"
+        code = self.code
+        L = self.pieces.setdefault(code, [])
+        dossier = self.dir / "pieces" / (self.pid or "sans_projet")
+        dossier.mkdir(parents=True, exist_ok=True)
+        cible = dossier / f"{code}_{len(L) + 1}_{nom}"
+        cible.write_bytes(donnees)
+        extrait = self.extraire_texte(nom, donnees)
+        date = datetime.now().strftime("%d/%m/%Y %H:%M")
+        L.append({"nom": nom, "legende": legende, "date": date, "taille": len(donnees),
+                  "fichier": str(cible), "extrait": extrait})
+        self.noter("f", f"{nom}" + (f" — {legende}" if legende else "") + f" ({taille_lisible(len(donnees))})")
+        self.save()
+        lu = (f" Son contenu texte ({len(extrait)} caractères) est pris en compte par la revue de l'étape."
+              if extrait else " Le contenu n'est pas lu par le coach : citez dans vos réponses ce que le document prouve.")
+        return [msg(f"📎 Document joint enregistré (étape {code}) : {nom} ({taille_lisible(len(donnees))}). "
+                    f"Il figurera dans le rapport comme preuve ; /doc retirer pour ne pas le verser.{lu}",
+                    BTN_PHOTO)]
+
+    def piece_locale(self, arg):
+        """/doc <chemin> [légende] — terminal uniquement."""
+        if not arg.strip():
+            return self.liste_pieces()
+        chemin, legende, essai = self.resoudre_image(arg, "tout")
+        if chemin is None:
+            return [f"Fichier introuvable : {essai}\n(les espaces et parenthèses sont acceptés ; guillemets facultatifs)"]
+        if chemin.stat().st_size > PIECE_MAX:
+            return [f"⚠️ Fichier trop volumineux ({taille_lisible(chemin.stat().st_size)}) : "
+                    f"{PIECE_MAX // 1024 // 1024} Mo au maximum."]
+        return self.joindre_piece(chemin.read_bytes(), chemin.name, legende)
+
+    def liste_pieces(self):
+        L = self.pieces.get(self.code) or [] if self.methode else []
+        if not L:
+            return ["Aucun document joint sur cette étape. Terminal : /doc <chemin> [légende] ; "
+                    "Telegram : envoyez le fichier comme document."]
+        lignes = [f"  {k}  {p['nom']} ({taille_lisible(p.get('taille', 0))}) {p.get('legende') or ''}".rstrip()
+                  for k, p in enumerate(L, 1)]
+        return [f"Documents joints de l'étape {self.code} :\n" + "\n".join(lignes) +
+                "\n/doc retirer <n> · /doc retirer tout · /doc retirer (le dernier)"]
+
+    def retirer_piece(self, arg):
+        """/doc retirer [n|tout] : retire un document joint de l'étape (le dernier par défaut)."""
+        if not self.methode:
+            return ["Aucune démarche en cours."]
+        code = self.code
+        L = self.pieces.get(code) or []
+        if not L:
+            return [f"Aucun document joint sur l'étape {code}."]
+        a = arg.strip().lower()
+        if a in ("tout", "toutes", "all"):
+            sel = list(range(len(L)))
+        elif not a:
+            sel = [len(L) - 1]
+        elif a.isdigit() and 1 <= int(a) <= len(L):
+            sel = [int(a) - 1]
+        else:
+            return self.liste_pieces()
+        for k in sorted(sel, reverse=True):
+            try:
+                Path(L[k].get("fichier", "")).unlink(missing_ok=True)
+            except OSError:
+                pass
+            del L[k]
+        if not L:
+            self.pieces.pop(code, None)
+        self.noter("s", f"Document joint retiré de l'étape {code}.")
+        self.save()
+        return [f"🗑 {len(sel)} document{'s' if len(sel) > 1 else ''} retiré{'s' if len(sel) > 1 else ''} de l'étape "
+                f"{code} (rapport) — vos réponses sont conservées."]
+
     def photo_locale(self, arg):
         """/photo <chemin> [légende] — terminal uniquement."""
         if not arg.strip():
@@ -3180,6 +3346,13 @@ class Session:
         cle = ALIAS_METHODES.get(nom, nom)
         if cle in METHODES:
             return self.demarrer(cle, arg), None
+        if nom in ("doc", "docs", "document", "documents", "piece", "pieces", "fichier", "preuve", "joindre"):
+            if arg.split()[:1] and arg.split()[0].lower() in ("retirer", "supprimer", "enlever", "annuler", "effacer"):
+                return self.retirer_piece(" ".join(arg.split()[1:])), None
+            if cli:
+                return self.piece_locale(arg), None
+            return self.liste_pieces() + ["Envoyez simplement le fichier comme document dans la conversation "
+                                          "(la légende sert de description)."], None
         if nom == "photo" and arg.split()[:1] and arg.split()[0].lower() in ("retirer", "supprimer", "enlever",
                                                                            "annuler", "effacer"):
             return self.retirer_photo(" ".join(arg.split()[1:])), None
@@ -3335,7 +3508,16 @@ class Session:
     def handle(self, texte, cli=False):
         """Point d'entrée unique : retourne (liste_de_messages, fichier_ou_None).
         Un message est un str, ou un dict {texte, boutons, remplace} (voir msg())."""
+        msgs, fichier = self._handle(texte, cli)
+        if not cli:                                       # Telegram : commandes à option cliquables
+            msgs = [tg_msg(m) for m in msgs]
+        return msgs, fichier
+
+    def _handle(self, texte, cli=False):
         t = texte.strip()
+        m_ = RE_CMD_SOULIGNE.match(t)
+        if m_:                                            # « /mode_rapide » = « /mode rapide »
+            t = f"/{m_.group(1)} {m_.group(2).replace('_', ' ')}{m_.group(3)}".strip()
         if not t and self.methode and not self.attend_titre and self.rca_actif() \
                 and self.rca_etat()["ph"] in ("ish", "pq"):
             t = "-"                                       # Entrée = « - » pendant l'analyse des causes
@@ -3457,7 +3639,7 @@ def largeur_terminal():
     import shutil
     return max(60, shutil.get_terminal_size((100, 30)).columns - 1)
 
-def agrandir_terminal(cols=110, rows=38):           
+def agrandir_terminal(cols=150, rows=40):           
     """Demande au terminal de prendre la taille voulue (séquence xterm « resize »), en plus petit comme
     en plus grand : la fenêtre n'occupe pas tout l'écran. Ignoré sans terminal interactif ; certains
     terminaux la refusent (voir README : --cols/--rows, --no-resize)."""
@@ -3633,9 +3815,9 @@ def main():
     ap.add_argument("--no-splash", action="store_true", help="n'affiche pas l'écran d'accueil")
     ap.add_argument("--no-color", action="store_true", help="désactive les couleurs")
     ap.add_argument("--no-resize", action="store_true", help="ne change pas la taille de la fenêtre")
-    ap.add_argument("--cols", type=int, default=int(os.getenv("PS_COLS", "110")),       # largeur
-                    help="largeur souhaitée de la fenêtre (défaut 110)")
-    ap.add_argument("--rows", type=int, default=int(os.getenv("PS_ROWS", "38")),        # hauteur
+    ap.add_argument("--cols", type=int, default=int(os.getenv("PS_COLS", "150")),       # largeur
+                    help="largeur souhaitée de la fenêtre (défaut 150)")
+    ap.add_argument("--rows", type=int, default=int(os.getenv("PS_ROWS", "40")),        # hauteur
                     help="hauteur souhaitée de la fenêtre (défaut 38)")
     args = ap.parse_args()
     COULEUR_ACTIVE = sys.stdout.isatty() and not args.no_color and "NO_COLOR" not in os.environ

@@ -91,6 +91,10 @@ Si l'analyse de D5 a été faite, la première question de **D6** reprend **chaq
 
 `/prec` annule la dernière saisie. Le plan (cause, nature, actions, pilotes, délais) est la réponse à cette question ; viennent ensuite le choix et les risques, la standardisation (VRS) et la validation du management. Si D5 n'a pas été faite, ou si elle est modifiée, la question redevient libre ou le plan repart de zéro.
 
+### Telegram : commandes cliquables
+
+Telegram ne rend cliquable qu'une commande sans espace. Les commandes à option s'écrivent donc avec un tiret bas, dans les messages du bot comme à la saisie : `/mode_guide`, `/mode_rapide`, `/mode_libre`, `/backend_groq`, `/backend_ollama`, `/etape_D5`, `/rapport_complet`, `/historique_tout`, `/photo_retirer`, `/doc_retirer`. L'effet est le même que `/mode rapide`, etc. (qui continue de fonctionner, et reste la forme du terminal).
+
 ### Corriger après coup : `/etape` et `/modifier`
 
 Rien n'est figé, ni en cours de démarche, ni une fois la démarche terminée (et son rapport généré).
@@ -158,6 +162,8 @@ Le mode est mémorisé ; passer de `libre` à `guide` conserve le texte déjà s
 | `/q` · `/quit`                                         | **Terminal uniquement** : quitte le programme (le projet est enregistré)                                                                   |
 | `/photo <chemin> [légende]`                            | **Terminal uniquement** : analyse une image locale (espaces, accents, parenthèses acceptés ; images volumineuses réduites automatiquement) |
 | `/photo retirer [n\|tout]`                             | Retire une analyse de photo de l'étape (rapport et historique), sans toucher aux réponses                                                  |
+| `/doc <chemin> [légende]`                            | **Terminal** : joint un fichier (texte, PDF, tableur…) comme preuve à l'étape ; sur Telegram, envoyez le fichier comme document                |
+| `/doc retirer [n\|tout]`                             | Retire un document joint de l'étape (rapport), sans toucher aux réponses ; `/doc` seul les liste                                          |
 
 Sous Telegram, chaque message porte les **boutons** utiles (valider, sauter, état, projets, modèles…) : un bouton exécute simplement la commande correspondante.
 
@@ -192,6 +198,16 @@ L'analyse tient compte de la méthode, du problème et de l'étape en cours, et 
 - Les photos sont redimensionnées (1280 px max, rotation EXIF corrigée) avant envoi, ce qui évite les refus pour taille. **Les images ne sont pas conservées** : seule l'analyse l'est.
 
 > 🔒 **Confidentialité** : avec **Groq**, la photo est envoyée au cloud ; avec **Ollama**, elle **reste sur le Pi5**. Pour des postes ou des produits chez un client, préférez `/modele b ollama`, et évitez visages et informations confidentielles.
+
+## 📎 Documents joints (preuves documentaires)
+
+Une étape peut s'appuyer sur des preuves autres que des photos : rapport d'essai, mesures, tableur, PDF, fichier texte…
+
+- **Terminal** : `/doc <chemin> [légende]` (espaces, accents et parenthèses acceptés).
+- **Telegram** : envoyez le fichier comme document ; la légende sert de description.
+- Le fichier (20 Mo au maximum) est copié dans le dossier du projet et **listé dans le rapport** avec sa légende, sa taille et son emplacement. Pour un fichier texte (txt, md, csv, json…) et, si `pypdf` ou `pdftotext` est installé, pour un PDF, un **extrait** est aussi repris dans le rapport.
+- La revue de l'étape tient compte des documents joints : elle ne réclame plus une preuve déjà fournie. Le contenu des autres formats (tableur, image de plan…) n'est pas lu par le coach : indiquez dans votre réponse ce que le document prouve.
+- `/doc` liste les documents de l'étape ; `/doc retirer [n|tout]` en retire. Comme pour les photos, le document se joint à l'étape en cours ; une démarche terminée se rouvre d'abord par `/etape <code>`.
 
 ## 🤖 Moteurs IA
 
